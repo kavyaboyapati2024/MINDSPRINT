@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import connectDB from './src/lib/db.js';
 import userRoutes from './src/routes/userRoutes.js'
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -10,6 +11,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(cors({
     origin : "http://localhost:5173",
@@ -20,7 +22,7 @@ app.use(cors({
 
 const PORT = process.env.PORT || 9000;
 
-app.use('/authUsers',userRoutes)
+app.use('/api/authUsers',userRoutes)
 
 
 app.listen(PORT,() => {

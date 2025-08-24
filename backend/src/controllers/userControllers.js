@@ -1,50 +1,60 @@
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import User from "../models/userModel.js";
+import { generateToken } from "../lib/utils.js";
+import { sendOtp, verifyOtp } from "../services/sendOtp.js";
+import { sendMail } from "../services/sendMail.js";
+import { generateOtpToken, verifyOtpToken } from "../services/otpToken.js";
 
 dotenv.config();
 
-//Function to register a user
+//Function to register user
 export const registerUser = async (req, res) => {
   const { email, userName, password, otp, verifyToken } = req.body;
-
   const lowerEmail = email.toLowerCase();
 
   try {
+    // STEP 0: Check if already exists
     const existingUser = await User.findOne({ email: lowerEmail });
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User already exists.",
-      });
+      return res
+        .status(409)
+        .json({ success: false, message: "User already exists." });
     }
 
-    // STEP 1: No OTP provided → Send OTP
+    // STEP 1: No OTP → send OTP
     if (!verifyToken && !otp) {
-      const htmlContent = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.5; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; padding: 20px; border-radius: 10px; background-color: #fafafa;">
-          <h2>🔐 Your One-Time Password (OTP)</h2>
-          <p>Hello ${userName},</p>
-          <p>Use the OTP below to complete your registration:</p>
-          <p style="font-size: 24px; font-weight: bold; color: #e74c3c;">{{OTP}}</p>
-          <p>This OTP is valid for <strong>5 minutes</strong>.</p>
-        </div>
-      `;
-      return await sendOtp(req, res, htmlContent);
+      return await sendOtp(req, res);
     }
 
-    // STEP 2: OTP provided → verify OTP (new logic)
+    // STEP 2: OTP entered → verify OTP
     if (!verifyToken && email && otp) {
       const otpResult = await verifyOtp(lowerEmail, otp);
       return res.status(otpResult.status).json(otpResult);
     }
 
+    // STEP 3: OTP token verified → create account
     if (userName && verifyToken) {
       const tokenResult = await verifyOtpToken(lowerEmail, verifyToken);
       if (!tokenResult.success) {
         return res.status(tokenResult.status).json(tokenResult);
       }
-      // STEP 3: Hash password and create user
+
+      // Validation
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters long",
+        });
+      }
+      const userNameTaken = await User.findOne({ userName });
+      if (userNameTaken) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Username already exists" });
+      }
+
+      // Hash password & save
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       const newUser = new User({
@@ -52,47 +62,34 @@ export const registerUser = async (req, res) => {
         email: lowerEmail,
         password: hashedPassword,
       });
-
-      const user = await User.findOne({ userName });
-      if (user) {
-        return res
-          .status(401)
-          .json({ status: "false", message: "userName already exsists" });
-      }
-      if (password.length < 6) {
-        return res.status(401).json({
-          status: "false",
-          message: "password must be at least 6 characters long",
-        });
-      }
       await newUser.save();
 
+      // Send Welcome Email
       const welcomeHtml = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f6f6f6;">
-        <h2 style="color: #2c3e50;">🎉 Welcome, ${userName}!</h2>
-        <p>We're excited to have you on board.</p>
-        <p>You can now log in and start using our services.</p>
-      </div>
-    `;
-      await sendMail(lowerEmail, welcomeHtml, "Welcome to Our Platform!");
+        <div style=style="font-family: Arial, sans-serif; padding: 20px; background-color: #f6f6f6; border-radius: 10px;">
+          <h2 style="color: #2c3e50;">🎉 Welcome, ${userName}!</h2>
+          <p>Thank you for joining <b>EQ-Auction</b>.</p>
+          <p>You can now log in and start bidding securely.</p>
+          <br>
+          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team EQ-Auction</p>
+        </div>
+      `;
+      await sendMail(lowerEmail, welcomeHtml, "🎉 Welcome to EQ-Auction!");
 
       return res.status(201).json({
         success: true,
         message: "Registration successful. Welcome email sent.",
       });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Required fields not provided",
-      });
     }
+
+    return res
+      .status(400)
+      .json({ success: false, message: "Required fields not provided" });
   } catch (err) {
     console.error("Registration Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: err.message,
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error", error: err.message });
   }
 };
 
@@ -209,51 +206,61 @@ export const updatePassword = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   const { email, otp, resetToken, newPassword } = req.body;
   const lowerEmail = email.toLowerCase();
+
   if (!email) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Email is required" });
+    return res.status(400).json({
+      success: false,
+      message: "Please provide your registered email.",
+    });
   }
+
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: lowerEmail });
     if (!user) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found" });
+        .json({ success: false, message: "No account found with this email." });
     }
-    // First Hit - email only
+
+    // First Hit - email only → send OTP
     if (!otp && !newPassword) {
       const htmlContent = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.5; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; padding: 20px; border-radius: 10px; background-color: #fafafa;">
-          <h2>🔐 Forgot Password OTP</h2>
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; max-width: 600px; margin: auto; padding: 20px; background-color: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0;">
+          <h2 style="color: #3498db;">🔐 Reset Your EQ-Auction Password</h2>
           <p>Hello ${user.userName},</p>
-          <p>Use the OTP below to reset your password:</p>
-          <p style="font-size: 24px; font-weight: bold; color: #3498db;">{{OTP}}</p>
-          <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+          <p>We received a request to reset your password. Use the One-Time Password (OTP) below to proceed:</p>
+          <p style="font-size: 24px; font-weight: bold; color: #e74c3c; text-align: center;">{{OTP}}</p>
+          <p>This OTP is valid for <strong>5 minutes</strong>. Please do not share it with anyone.</p>
+          <p>If you did not request a password reset, please ignore this email.</p>
+          <br>
+          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team EQ-Auction</p>
         </div>
+
+
       `;
       return await sendOtp(req, res, htmlContent);
     }
-    // Second Hit - Email and otp
+
+    // Second Hit - Email + OTP → verify OTP
     if (otp && !newPassword && !resetToken) {
-      const otpResult = await verifyOtp(lowerEmail, otp); // e.g. { success, status, message }
+      const otpResult = await verifyOtp(lowerEmail, otp);
       if (!otpResult.success) {
         return res.status(otpResult.status).json(otpResult);
       }
 
-      // OTP ok → send JWT reset token (valid 5 min)
       const token = generateOtpToken(lowerEmail);
       return res.status(200).json({
         success: true,
         status: 200,
-        message: "OTP verified. Use the reset token to set a new password.",
+        message:
+          "OTP verified successfully. Use the reset token to set a new password.",
         resetToken: token,
-        expiresIn: 300, // seconds (5 min) – convenient for the client
+        expiresIn: 300, // 5 minutes
       });
     }
-    // Third Hit - email, otp, resetToken, newPassword
+
+    // Third Hit - Email + Reset Token + New Password → reset password
     if (newPassword && resetToken) {
-      // verify the JWT reset token
       const tokenResult = await verifyOtpToken(lowerEmail, resetToken);
       if (!tokenResult.success) {
         return res.status(tokenResult.status).json(tokenResult);
@@ -263,7 +270,7 @@ export const forgotPassword = async (req, res) => {
         return res.status(400).json({
           success: false,
           status: 400,
-          message: "Password must be at least 6 characters.",
+          message: "New password must be at least 6 characters long.",
         });
       }
 
@@ -278,25 +285,25 @@ export const forgotPassword = async (req, res) => {
       return res.status(200).json({
         success: true,
         status: 200,
-        message: "Password updated successfully.",
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Required fields not provided",
+        message:
+          "Your password has been updated successfully. You can now log in with your new password.",
       });
     }
+
+    return res.status(400).json({
+      success: false,
+      status: 400,
+      message: "Required information missing. Please check and try again.",
+    });
   } catch (err) {
-    console.error("Forgot‑Password Error:", err);
+    console.error("Forgot-Password Error:", err);
     return res.status(500).json({
       success: false,
       status: 500,
-      message: "Server error.",
+      message: "Internal server error. Please try again later.",
     });
   }
 };
-
 
 //Function for user logout
 export const logoutUser = (req, res) => {
