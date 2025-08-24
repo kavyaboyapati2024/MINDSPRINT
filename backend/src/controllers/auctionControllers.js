@@ -14,8 +14,8 @@ export const createAuction = async (req, res) => {
     const fileBase64 = req.file.buffer.toString("base64");
 
     // Convert auctionDate + startTime / endTime to UTC Date objects
-    const startDateTime = new Date(`${auctionDate}T${startTime}:00Z`);
-    const endDateTime = new Date(`${auctionDate}T${endTime}:00Z`);
+    const startDateTime = new Date(`${auctionDate}T${startTime}:00`);
+    const endDateTime = new Date(`${auctionDate}T${endTime}:00`);
 
     if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return res.status(400).json({ error: "Invalid date or time format" });
