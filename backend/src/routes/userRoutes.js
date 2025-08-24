@@ -6,7 +6,7 @@ import {
   forgotPassword,
   logoutUser
 } from "../controllers/userControllers.js";
-import { protectRoute } from "../../middlewares/jwtToken.js";
+import { protectRoute } from "../middlewares/jwtToken.js";
 
 const router = express.Router();
 
