@@ -3,9 +3,9 @@ import Auction from "../models/auctionModel.js";
 //create an auction
 export const createAuction = async (req, res) => {
   try {
-    const { title, description, basePrice, minIncrement, auctionDate, startTime, endTime } = req.body;
+    const { title, description, basePrice, startDateTime, endDateTime } = req.body;
 
-    if (!title || !description || !basePrice || !minIncrement || !auctionDate || !startTime || !endTime) {
+    if (!title || !description || !basePrice || !startDateTime || !endDateTime) {
       return res.status(400).json({ error: "All required fields must be provided" });
     }
 
@@ -13,11 +13,10 @@ export const createAuction = async (req, res) => {
 
     const fileBase64 = req.file.buffer.toString("base64");
 
-    // Convert auctionDate + startTime / endTime to UTC Date objects
-    const startDateTime = new Date(`${auctionDate}T${startTime}:00`);
-    const endDateTime = new Date(`${auctionDate}T${endTime}:00`);
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
 
-    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({ error: "Invalid date or time format" });
     }
 
@@ -25,9 +24,8 @@ export const createAuction = async (req, res) => {
       title,
       description,
       basePrice,
-      minIncrement,
-      startDateTime,
-      endDateTime,
+      startDateTime: start,
+      endDateTime: end,
       file: fileBase64,
     });
 
