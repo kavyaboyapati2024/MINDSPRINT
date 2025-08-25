@@ -1,22 +1,21 @@
-import { useState } from "react"
-import "./index.css" // Tailwind styles
+import { Routes, Route } from "react-router-dom";
+import "./index.css";
+import Signup from "./pages/Signup";
+import Signin from "./pages/Signin";
+import UpdatePassword from "./pages/UpdatePassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import AuctionHomepage from "./pages/Auctions/AuctionHome";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-3xl font-bold text-purple-600 mb-4">
-        Hello Tailwind + React 👋
-      </h1>
-      <button
-        onClick={() => setCount(count + 1)}
-        className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-blue-600 transition"
-      >
-        Count is {count}
-      </button>
-    </div>
-  )
+    <Routes>
+      <Route path="/" element={<Signup />} />
+      <Route path="/signin" element={<Signin />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/home" element={<AuctionHomepage />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
