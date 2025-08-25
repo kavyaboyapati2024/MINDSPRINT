@@ -5,7 +5,7 @@ import connectDB from './src/lib/db.js';
 import cookieParser from 'cookie-parser';
 import userRoutes from './src/routes/userRoutes.js'
 import upcomingAuctionRoutes from './src/routes/auctionRoutes.js'
-
+import './src/middlewares/auctionCron.js'
 dotenv.config();
 
 const app = express();
