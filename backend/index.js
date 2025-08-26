@@ -7,6 +7,8 @@ import userRoutes from './src/routes/userRoutes.js'
 import upcomingAuctionRoutes from './src/routes/auctionRoutes.js'
 import './src/middlewares/auctionCron.js'
 import auctionRegistrationRoutes from './src/routes/auctionRegistrationRoutes.js'
+import bidRoutes from "./src/routes/bidRoutes.js"
+import paymentRoutes from "./src/routes/paymentRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -27,6 +29,10 @@ const PORT = process.env.PORT || 9000;
 app.use('/api/authUsers',userRoutes)
 app.use('/api/auctions',upcomingAuctionRoutes)
 app.use('/api/auctionRegistrations',auctionRegistrationRoutes)
+app.use('/api/bids', bidRoutes)
+app.use("/api/payment", paymentRoutes)
+
+
 
 app.listen(PORT,() => {
     console.log(`Server running at port : ${PORT}`)
