@@ -254,6 +254,7 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
 
             case 2:
                 return (
+                    <div className="space-y-4">
                         <div>
                             <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
                                 <MapPin className="w-4 h-4" />
@@ -267,16 +268,14 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 className="w-full bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-400 outline-none focus:border-blue-500 transition-colors resize-none"
                                 rows={3}
                             />
-                            <div className="space-y-4">
+                        </div>
+
                         <div>
                             <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
                                 <Notebook className="w-4 h-4" />
                                 Registration fee is 10% of the base amount
                             </label>
-                           
                         </div>
-                        </div>
-                        
 
                         {/* Registration Fee Display */}
                         <div className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-lg p-4 border border-emerald-400/20">
@@ -292,8 +291,6 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                         </div>
                     </div>
                 );
-
-           
 
             default:
                 return null;
@@ -426,7 +423,30 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                     </button>
                                 )}
 
-            {/* Detailed View Modal */}
+                                {currentStep < 2 ? (
+                                    <button
+                                        onClick={nextStep}
+                                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                    >
+                                        Next
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                    >
+                                        <CreditCard className="w-4 h-4" />
+                                        Pay & Register
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Detailed View Modal - MOVED OUTSIDE OF REGISTRATION MODAL */}
             {showViewModal && viewingAuction && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 text-slate-200 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -600,29 +620,6 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 >
                                     {registeredAuctions.has(viewingAuction.title) ? 'Already Registered' : 'Register Now'}
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-                                {currentStep < 2 ? (
-                                    <button
-                                        onClick={nextStep}
-                                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-                                    >
-                                        Next
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-                                    >
-                                        <CreditCard className="w-4 h-4" />
-                                        Pay & Register
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
