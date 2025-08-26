@@ -14,6 +14,11 @@ const AuctionHomepage = () => {
   const [registeredAuctions, setRegisteredAuctions] = useState(new Set());
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Remove these states as they're now handled in UpcomingAuctions component
+  // const [showViewModal, setShowViewModal] = useState(false);
+  // const [viewingAuction, setViewingAuction] = useState(null);
+  
   const [registrationData, setRegistrationData] = useState({
     name: '',
     email: '',
@@ -144,6 +149,12 @@ const AuctionHomepage = () => {
     setShowRegistrationModal(true);
   };
 
+  // Remove the handleView function as it's now handled in UpcomingAuctions component
+  // const handleView = (auction) => {
+  //   setViewingAuction(auction);
+  //   setShowViewModal(true);
+  // };
+
   const handleRegistrationSubmit = (e) => {
     e.preventDefault();
     // Add auction to registered list
@@ -185,7 +196,7 @@ const AuctionHomepage = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-8 text-center">
           <h1 className="text-7xl font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            Quantum Bid
+            Quantum-Bid
           </h1>
           <p className="text-lg text-slate-300 max-w-3xl mx-auto mb-6 leading-relaxed">
             Experience the future of professional auctions with our cutting-edge platform. 
@@ -260,11 +271,17 @@ const AuctionHomepage = () => {
           <OngoingAuctions timers={timers} />
         )}
 
-        {/* Upcoming Auctions */}
+        {/* Upcoming Auctions - Remove the props that are no longer needed */}
         {activeTab === 'upcoming' && (
           <UpcomingAuctions 
             registeredAuctions={registeredAuctions} 
-            handleRegister={handleRegister} 
+            // Remove these props as they're now handled internally in UpcomingAuctions
+            // handleRegister={handleRegister}
+            // handleView={handleView}
+            // showViewModal={showViewModal}
+            // setShowViewModal={setShowViewModal}
+            // viewingAuction={viewingAuction}
+            // setViewingAuction={setViewingAuction}
           />
         )}
 
