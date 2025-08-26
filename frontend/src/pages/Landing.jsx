@@ -97,7 +97,7 @@ function Landing() {
       <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
         <QuantumLogo size={44} />
         <div>
-          <h1 className="text-lg font-semibold">Quantum-BID</h1>
+          <h1 className="text-lg font-semibold">Quantum-Bid</h1>
           <p className="text-xs text-gray-400">Quantum Secured</p>
         </div>
       </div>

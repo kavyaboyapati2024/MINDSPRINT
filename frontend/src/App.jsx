@@ -6,8 +6,10 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AuctionHomepage from "./pages/Auctions/AuctionHome";
 import AuctionRegistrationForm from './components/auction/AuctionRegistrationForm';
-
 import Landing from "./pages/Landing";
+import AboutUs from "./pages/Auctions/AboutUs";
+import Faqs from "./pages/Auctions/Faqs";
+import LiveAuction from "./pages/Auctions/LiveAuction";
 
 
 function App() {
@@ -19,8 +21,9 @@ function App() {
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/home" element={<AuctionHomepage />} />
-      <Route path="/auction-registration" element={<AuctionRegistrationForm />} />
-
+      <Route path="/live" element={<LiveAuction/>}/>
+      <Route path="/about" element={<AboutUs/>}/>
+      <Route path="/faqs" element={<Faqs/>}/>
     </Routes>
   );
 }

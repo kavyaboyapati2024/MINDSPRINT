@@ -26,7 +26,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div className="font-bold text-xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Quantum Bid
+              Quantum-Bid
             </div>
           </div>
 
