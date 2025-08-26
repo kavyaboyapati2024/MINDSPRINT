@@ -5,10 +5,11 @@ import Signin from "./pages/Signin";
 import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AuctionHomepage from "./pages/Auctions/AuctionHome";
-import AuctionLive from "./pages/Auctions/AuctionLive"
+import AuctionRegistrationForm from './components/auction/AuctionRegistrationForm';
 import Landing from "./pages/Landing";
 import AboutUs from "./pages/Auctions/AboutUs";
 import Faqs from "./pages/Auctions/Faqs"
+
 
 function App() {
   return (

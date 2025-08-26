@@ -34,66 +34,64 @@ const Signin = () => {
 
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setErrors({});
+  e.preventDefault();
+  setErrors({});
 
-    // Validate form
-    const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = 'Please enter your email';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
+  // Validate form
+  const newErrors = {};
+  if (!formData.email) {
+    newErrors.email = 'Please enter your email';
+  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    newErrors.email = 'Please enter a valid email';
+  }
 
-    if (!formData.password) {
-      newErrors.password = 'Please enter your password';
-    }
+  if (!formData.password) {
+    newErrors.password = 'Please enter your password';
+  }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      const result = await AuthService.login(formData.email, formData.password);
+  setIsLoading(true);
+  try {
+    const result = await AuthService.login(formData.email, formData.password);
+    const data = result || {};
 
-      // Ensure result is always an object
-      const data = result || {};
+    if (result.success) {
+      setLoginSuccess(true);
 
-      if (result.success) {
-        setLoginSuccess(true);
-
-        if (rememberMe) {
-          console.log('Would store email:', formData.email);
-        }
-
-        setTimeout(() => {
-          console.log('Login successful:', data);
-          // window.location.href = '/dashboard';
-        }, 2000);
-      } else {
-        if (data.message === 'User not found') {
-          setErrors({ email: 'No account found with this email' });
-        } else if (data.message === 'Invalid password') {
-          setErrors({ password: 'Incorrect password' });
-        } else {
-          setErrors({ general: data.message || 'Login failed. Please try again.' });
-        }
+      if (rememberMe) {
+        console.log('Would store email:', formData.email);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ general: 'Network error. Please check your connection and try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
+      // redirect to homepage after 2s (you can remove setTimeout if you want instant redirect)
+      setTimeout(() => {
+        navigate("/home");
+      }, 2000);
+
+    } else {
+      if (data.message === 'User not found') {
+        setErrors({ email: 'No account found with this email' });
+      } else if (data.message === 'Invalid password') {
+        setErrors({ password: 'Incorrect password' });
+      } else {
+        setErrors({ general: data.message || 'Login failed. Please try again.' });
+      }
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    setErrors({ general: 'Network error. Please check your connection and try again.' });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // for redirecting to signup page
   const navigate = useNavigate();
   const handleRedirectToSignup = () => {
-    navigate('/'); // Signup is routed at "/"
+    navigate('/Signup'); // Signup is routed at "/"
   };
 
   // for redirecting to forgot password page
