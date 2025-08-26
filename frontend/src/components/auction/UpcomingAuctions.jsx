@@ -6,13 +6,10 @@ import {
     X,
     Mail,
     Phone,
-    DollarSign,
-    FileText,
     CreditCard,
     Notebook,
     ChevronRight,
     ChevronLeft,
-    Building,
     MapPin,
 } from "lucide-react";
 
@@ -23,15 +20,36 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
         fullName: "",
         email: "",
         phone: "",
-        companyName: "",
-        address: "",
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        cardholderName: "",
+        address: ""
     });
 
-    // Updated auctions with base amounts
+    // 🔹 FIX: define closeRegistrationModal
+    const closeRegistrationModal = () => {
+        setSelectedAuction(null);
+        setCurrentStep(1);
+        setFormData({
+            fullName: "",
+            email: "",
+            phone: "",
+            address: ""
+        });
+    };
+
+
+    // ✅ Validation function
+    const validateStep = () => {
+        if (currentStep === 1) {
+            return formData.fullName.trim() !== "" &&
+                formData.email.trim() !== "" &&
+                formData.phone.trim() !== "";
+        }
+        if (currentStep === 2) {
+            return formData.address.trim() !== "";
+        }
+        return false;
+    };
+
+
     const upcomingAuctions = [
         {
             title: "Vehicle Fleet Auction",
@@ -95,29 +113,13 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
         setCurrentStep(1);
     };
 
-    const closeRegistrationModal = () => {
-        setSelectedAuction(null);
-        setCurrentStep(1);
-        setFormData({
-            fullName: "",
-            email: "",
-            phone: "",
-            companyName: "",
-            address: "",
-            cardNumber: "",
-            expiryDate: "",
-            cvv: "",
-            cardholderName: "",
-        });
-    };
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const nextStep = () => {
-        if (currentStep < 3) setCurrentStep(currentStep + 1);
+        if (currentStep < 2) setCurrentStep(currentStep + 1);
     };
 
     const prevStep = () => {
@@ -132,13 +134,13 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
             userId,
             registrationFee
         });
-        closeRegistrationModal();
+        closeRegistrationModal(); // ✅ now works
     };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'INR'
         }).format(amount);
     };
 
@@ -199,29 +201,28 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
 
             case 2:
                 return (
-                        <div>
-                            <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                Address
-                            </label>
-                            <textarea
-                                name="address"
-                                value={formData.address}
-                                onChange={handleChange}
-                                placeholder="Enter your address"
-                                className="w-full bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-400 outline-none focus:border-blue-500 transition-colors resize-none"
-                                rows={3}
-                            />
-                            <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
-                                <Notebook className="w-4 h-4" />
-                                Registration fee is 10% of the base amount
-                            </label>
-                           
+                    <div>
+                        <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            Address
+                        </label>
+                        <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            placeholder="Enter your address"
+                            className="w-full bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-400 outline-none focus:border-blue-500 transition-colors resize-none"
+                            rows={3}
+                        />
+
+                        <div className="space-y-4 mt-4">
+                            <div>
+                                <label className="block text-sm mb-2 font-medium text-slate-300 flex items-center gap-2">
+                                    <Notebook className="w-4 h-4" />
+                                    Registration fee is 10% of the base amount
+                                </label>
+                            </div>
                         </div>
-                        </div>
-                        
 
                         {/* Registration Fee Display */}
                         <div className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-lg p-4 border border-emerald-400/20">
@@ -238,8 +239,6 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                     </div>
                 );
 
-           
-
             default:
                 return null;
         }
@@ -249,14 +248,13 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
         switch (currentStep) {
             case 1: return "Personal Information";
             case 2: return "Company Details";
-            case 3: return "Payment Information";
             default: return "";
         }
     };
 
     return (
         <>
-            {/* Auction list with Base Amount column */}
+            {/* Auction Table */}
             <div className="bg-slate-800/60 backdrop-blur-lg border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 grid grid-cols-8 gap-3 font-semibold text-white">
                     <div className="col-span-2">Auction Title</div>
@@ -293,7 +291,6 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 <span className="text-xs">{auction.endTime}</span>
                             </div>
                             <div className="col-span-1 flex items-center gap-1 text-slate-400 text-sm">
-                                <DollarSign className="w-3 h-3" />
                                 <span className="text-xs font-semibold text-green-400">
                                     {formatCurrency(auction.baseAmount)}
                                 </span>
@@ -310,7 +307,7 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                 ))}
             </div>
 
-            {/* Step-by-Step Registration Modal */}
+            {/* Registration Modal */}
             {selectedAuction && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 text-slate-200 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden">
@@ -355,7 +352,6 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                         <div className="px-6 py-4 max-h-[400px] overflow-y-auto">
                             {renderStepContent()}
                         </div>
-
                         {/* Footer */}
                         <div className="px-6 py-4 border-t border-slate-700/50">
                             <div className="flex gap-3">
@@ -372,7 +368,11 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 {currentStep < 2 ? (
                                     <button
                                         onClick={nextStep}
-                                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                        disabled={!validateStep()}   // ✅ Disable until valid
+                                        className={`flex-1 font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2
+          ${validateStep()
+                                                ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                                                : "bg-slate-600 text-slate-400 cursor-not-allowed"}`}
                                     >
                                         Next
                                         <ChevronRight className="w-4 h-4" />
@@ -380,7 +380,11 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 ) : (
                                     <button
                                         onClick={handleSubmit}
-                                        className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                        disabled={!validateStep()}   // ✅ Disable until address entered
+                                        className={`flex-1 font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2
+          ${validateStep()
+                                                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+                                                : "bg-slate-600 text-slate-400 cursor-not-allowed"}`}
                                     >
                                         <CreditCard className="w-4 h-4" />
                                         Pay & Register
@@ -388,6 +392,7 @@ const UpcomingAuctions = ({ registeredAuctions = new Set(), userId = null }) => 
                                 )}
                             </div>
                         </div>
+
                     </div>
                 </div>
             )}

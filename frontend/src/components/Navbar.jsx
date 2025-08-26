@@ -1,7 +1,11 @@
 import React from 'react';
 import { TrendingUp, Home, Users, HelpCircle, LogOut, Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';   // ✅ Import navigate hook
+import AuthService from '../services/authServices'; // adjust the path if needed
 
 const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
+  const navigate = useNavigate(); // ✅ Initialize navigate
+
   const NavLink = ({ href, icon, label, isActive = false, onClick }) => (
     <button
       onClick={onClick}
@@ -15,6 +19,27 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       {label}
     </button>
   );
+
+  // 🔹 Logout handler
+  const handleLogout = async () => {
+    try {
+      const result = await AuthService.logout();
+      if (result.success) {
+        // ✅ Clear local auth data if any (like tokens)
+        localStorage.removeItem('user'); 
+        localStorage.removeItem('token'); 
+
+        // ✅ Redirect to signin page
+        navigate('/signin');
+      } else {
+        console.error('Logout failed:', result.message || 'Unknown error');
+        alert(result.message || 'Logout failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+      alert('Something went wrong during logout.');
+    }
+  };
 
   return (
     <nav className="relative bg-slate-800/90 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-40">
@@ -52,7 +77,10 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
 
           {/* Logout Button - Desktop */}
           <div className="hidden md:block">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-red-500/40">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-red-500/40"
+            >
               <LogOut className="w-4 h-4" />
               Logout
             </button>
@@ -96,8 +124,11 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               />
               <div className="h-px bg-slate-600 my-3"></div>
               <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
                 className="w-full flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <LogOut className="w-4 h-4" />
                 Logout
