@@ -14,13 +14,13 @@ export const sendOtp = async (req, res, htmlContent) => {
     // Fallback default template if none provided
     const defaultHtml = `
       <div style="font-family: Arial, sans-serif; line-height: 1.5; max-width: 600px; margin: auto; padding: 20px; background-color: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0;">
-        <h2 style="color: #FEA203;">🔐 Verify Your EQ-Auction Account</h2>
+        <h2 style="color: #FEA203;">🔐 Verify Your Quantum-Bid Account</h2>
         <p>Use the OTP below to complete your registration:</p>
         <p style="font-size: 24px; font-weight: bold; color: #e74c3c; text-align: center;">{{OTP}}</p>
         <p>This OTP will expire in <strong>5 minutes</strong>. Do not share it with anyone.</p>
         <p>If you did not request this, please ignore this email.</p>
         <br>
-        <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team EQ-Auction</p>
+        <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team Quantum-Bid</p>
       </div>
     `;
 

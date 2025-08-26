@@ -68,13 +68,13 @@ export const registerUser = async (req, res) => {
       const welcomeHtml = `
         <div style=style="font-family: Arial, sans-serif; padding: 20px; background-color: #f6f6f6; border-radius: 10px;">
           <h2 style="color: #2c3e50;">🎉 Welcome, ${userName}!</h2>
-          <p>Thank you for joining <b>EQ-Auction</b>.</p>
+          <p>Thank you for joining <b>Quantum-Bid</b>.</p>
           <p>You can now log in and start bidding securely.</p>
           <br>
-          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team EQ-Auction</p>
+          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team Quantum-Bid</p>
         </div>
       `;
-      await sendMail(lowerEmail, welcomeHtml, "🎉 Welcome to EQ-Auction!");
+      await sendMail(lowerEmail, welcomeHtml, "🎉 Welcome to Quantum-Bid!");
 
       return res.status(201).json({
         success: true,
@@ -226,14 +226,14 @@ export const forgotPassword = async (req, res) => {
     if (!otp && !newPassword) {
       const htmlContent = `
         <div style="font-family: Arial, sans-serif; line-height: 1.5; max-width: 600px; margin: auto; padding: 20px; background-color: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0;">
-          <h2 style="color: #3498db;">🔐 Reset Your EQ-Auction Password</h2>
+          <h2 style="color: #3498db;">🔐 Reset Your Quantum-Bid Password</h2>
           <p>Hello ${user.userName},</p>
           <p>We received a request to reset your password. Use the One-Time Password (OTP) below to proceed:</p>
           <p style="font-size: 24px; font-weight: bold; color: #e74c3c; text-align: center;">{{OTP}}</p>
           <p>This OTP is valid for <strong>5 minutes</strong>. Please do not share it with anyone.</p>
           <p>If you did not request a password reset, please ignore this email.</p>
           <br>
-          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team EQ-Auction</p>
+          <p style="font-size: 14px; color: #555;">Best Regards,<br/>Team Quantum-Bid</p>
         </div>
 
 
