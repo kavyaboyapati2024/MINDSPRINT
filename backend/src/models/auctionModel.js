@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const auctionSchema = new mongoose.Schema(
   {
+    auctionerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auctioner",
+      required: true,
+    },
     title: { type: String, required: true },
     description: { type: String, required: true },
     basePrice: { type: Number, required: true },
