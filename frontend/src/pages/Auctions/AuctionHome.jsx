@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, User, Clock, Calendar, CheckCircle, Play, UserPlus, Download, Lock } from 'lucide-react';
+import { TrendingUp, User, Clock, Calendar, CheckCircle, Play, UserPlus, Download, Lock, Home, Users, HelpCircle, LogOut, Menu, X } from 'lucide-react';
 
 const AuctionHomepage = () => {
   const [activeTab, setActiveTab] = useState('ongoing');
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [registeredAuctions, setRegisteredAuctions] = useState(new Set());
   const [selectedAuction, setSelectedAuction] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     name: '',
     email: '',
@@ -19,6 +20,13 @@ const AuctionHomepage = () => {
     'furniture': { hours: 4, minutes: 55, seconds: 15 },
     'software': { hours: 1, minutes: 12, seconds: 45 }
   });
+  const [counters, setCounters] = useState({
+    auctionValue: 0,
+    successfulAuctions: 0,
+    enterpriseClients: 0,
+    securityUptime: 0
+  });
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   // Update countdown timers
   useEffect(() => {
@@ -49,9 +57,70 @@ const AuctionHomepage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Animate counters on component mount
+  useEffect(() => {
+    const animateCounters = () => {
+      const targetValues = {
+        auctionValue: 2.5,
+        successfulAuctions: 15000,
+        enterpriseClients: 500,
+        securityUptime: 99.9
+      };
+
+      const duration = 2000; // 2 seconds
+      const startTime = Date.now();
+
+      const updateCounters = () => {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+        setCounters({
+          auctionValue: targetValues.auctionValue * easeOutQuart,
+          successfulAuctions: Math.floor(targetValues.successfulAuctions * easeOutQuart),
+          enterpriseClients: Math.floor(targetValues.enterpriseClients * easeOutQuart),
+          securityUptime: targetValues.securityUptime * easeOutQuart
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(updateCounters);
+        }
+      };
+
+      requestAnimationFrame(updateCounters);
+    };
+
+    if (!hasAnimated) {
+      // Delay animation to make it more noticeable
+      const timer = setTimeout(() => {
+        animateCounters();
+        setHasAnimated(true);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasAnimated]);
+
   const formatTime = (timer) => {
     const { hours, minutes, seconds } = timer;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatCounterValue = (key, value) => {
+    switch (key) {
+      case 'auctionValue':
+        return `${value.toFixed(1)}B+`;
+      case 'successfulAuctions':
+        return `${value.toLocaleString()}+`;
+      case 'enterpriseClients':
+        return `${value}+`;
+      case 'securityUptime':
+        return `🛡️ ${value.toFixed(1)}%`;
+      default:
+        return value;
+    }
   };
 
   const ongoingAuctions = [
@@ -241,8 +310,114 @@ const AuctionHomepage = () => {
     });
   };
 
+  const NavLink = ({ href, icon, label, isActive = false, onClick }) => (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 ${
+        isActive
+          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/40'
+          : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      {/* Navigation Bar */}
+      <nav className="relative bg-slate-800/90 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="font-bold text-xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                Quantum Bid
+              </div>
+            </div>
+
+            {/* Center Navigation - Desktop */}
+            <div className="hidden md:flex items-center gap-2">
+              <NavLink 
+                href="#home" 
+                icon={<Home className="w-4 h-4" />} 
+                label="Home" 
+                isActive={true}
+              />
+              <NavLink 
+                href="#about" 
+                icon={<Users className="w-4 h-4" />} 
+                label="About Us" 
+              />
+              <NavLink 
+                href="#faqs" 
+                icon={<HelpCircle className="w-4 h-4" />} 
+                label="FAQs" 
+              />
+            </div>
+
+            {/* Logout Button - Desktop */}
+            <div className="hidden md:block">
+              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-red-500/40">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-white" />
+              ) : (
+                <Menu className="w-6 h-6 text-white" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile Navigation Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
+              <div className="px-4 py-4 space-y-2">
+                <NavLink 
+                  href="#home" 
+                  icon={<Home className="w-4 h-4" />} 
+                  label="Home" 
+                  isActive={true}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <NavLink 
+                  href="#about" 
+                  icon={<Users className="w-4 h-4" />} 
+                  label="About Us"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <NavLink 
+                  href="#faqs" 
+                  icon={<HelpCircle className="w-4 h-4" />} 
+                  label="FAQs"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <div className="h-px bg-slate-600 my-3"></div>
+                <button 
+                  className="w-full flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
       {/* Header Section */}
       <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10"></div>
@@ -264,19 +439,27 @@ const AuctionHomepage = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">$2.5B+</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">
+                {formatCounterValue('auctionValue', counters.auctionValue)}
+              </div>
               <div className="text-slate-400 font-medium text-sm">Total Auction Value</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">15,000+</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">
+                {formatCounterValue('successfulAuctions', counters.successfulAuctions)}
+              </div>
               <div className="text-slate-400 font-medium text-sm">Successful Auctions</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">500+</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">
+                {formatCounterValue('enterpriseClients', counters.enterpriseClients)}
+              </div>
               <div className="text-slate-400 font-medium text-sm">Enterprise Clients</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">🛡️ 99.9%</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">
+                {formatCounterValue('securityUptime', counters.securityUptime)}
+              </div>
               <div className="text-slate-400 font-medium text-sm">Security Uptime</div>
             </div>
           </div>
