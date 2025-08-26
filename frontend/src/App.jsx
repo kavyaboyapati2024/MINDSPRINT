@@ -5,7 +5,10 @@ import Signin from "./pages/Signin";
 import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AuctionHomepage from "./pages/Auctions/AuctionHome";
+import AuctionRegistrationForm from './components/auction/AuctionRegistrationForm';
+
 import Landing from "./pages/Landing";
+
 
 function App() {
   return (
@@ -16,6 +19,8 @@ function App() {
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/home" element={<AuctionHomepage />} />
+      <Route path="/auction-registration" element={<AuctionRegistrationForm />} />
+
     </Routes>
   );
 }
