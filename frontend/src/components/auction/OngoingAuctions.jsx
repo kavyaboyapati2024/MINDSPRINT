@@ -56,7 +56,6 @@ const OngoingAuctions = ({ timers }) => {
       id: 'laptop',
       title: 'Laptop Procurement Auction',
       auctioneer: 'John Smith',
-      purpose: 'Office Equipment Purchase',
       endTime: timers.laptop,
       currentBid: '₹85,000',
       status: 'LIVE'
@@ -65,7 +64,6 @@ const OngoingAuctions = ({ timers }) => {
       id: 'furniture',
       title: 'Office Furniture Bidding',
       auctioneer: 'Sarah Wilson',
-      purpose: 'Workspace Setup',
       endTime: timers.furniture,
       currentBid: '₹1,25,000',
       status: 'LIVE'
@@ -74,7 +72,6 @@ const OngoingAuctions = ({ timers }) => {
       id: 'software',
       title: 'Software License Auction',
       auctioneer: 'Mike Johnson',
-      purpose: 'IT Infrastructure',
       endTime: timers.software,
       currentBid: '₹3,50,000',
       status: 'LIVE'
@@ -83,10 +80,9 @@ const OngoingAuctions = ({ timers }) => {
 
   return (
     <div className="bg-slate-800/60 backdrop-blur-lg border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 grid grid-cols-8 gap-3 font-semibold text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 grid grid-cols-7 gap-3 font-semibold text-white">
         <div className="col-span-2">Auction Title</div>
         <div className="col-span-1">Auctioneer</div>
-        <div className="col-span-1">Purpose</div>
         <div className="col-span-1">End Time</div>
         <div className="col-span-1">Sealed Bids</div>
         <div className="col-span-1">Status</div>
@@ -97,17 +93,13 @@ const OngoingAuctions = ({ timers }) => {
           key={index}
           className="px-4 py-3 border-b border-slate-700/30 last:border-b-0 hover:bg-blue-500/5 transition-all duration-300 hover:transform hover:translate-x-2"
         >
-          <div className="grid grid-cols-8 gap-3 items-center">
+          <div className="grid grid-cols-7 gap-3 items-center">
             <div className="col-span-2 font-semibold text-slate-200">
               {auction.title}
             </div>
             <div className="col-span-1 flex items-center gap-1 text-slate-400 text-sm">
               <User className="w-3 h-3" />
               {auction.auctioneer}
-            </div>
-            <div className="col-span-1 flex items-center gap-1 text-slate-400 text-sm">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              {auction.purpose}
             </div>
             <div className="col-span-1 font-mono font-semibold text-amber-400 text-sm">
               {formatTime(auction.endTime)}
