@@ -1,4 +1,5 @@
 import Auction from "../models/auctionModel.js";
+import Auctioner from "../models/auctionerModel.js";
 
 //create an auction
 export const createAuction = async (req, res) => {
@@ -83,12 +84,27 @@ export const getOngoingAuctions = async (req, res) => {
   }
 };
 
-// Get Past Auctions
+//Get Past auctions
 export const getPastAuctions = async (req, res) => {
   try {
-    const past = await Auction.find({ status: "past" });
-    return res.status(200).json({ past });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+    // Find past auctions and populate auctioner name
+    const pastAuctions = await Auction.find({ status: "past" })
+      .populate("auctionerId", "name"); 
+
+    // Example winning bids array (randomized)
+    const winningBids = ["₹180000", "₹200000", "₹220000", "₹250000", "₹300000"];
+
+    // Format response
+    const formatted = pastAuctions.map((auction, index) => ({
+      _id: auction._id,
+      title: auction.title,
+      auctioneer: auction.auctionerId?.name || "Unknown",
+      completionDate: auction.endDateTime.toISOString().split("T")[0], 
+      winningBid: winningBids[index % winningBids.length], // cycle through array
+    }));
+
+    res.json({ past: formatted });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
