@@ -1,141 +1,250 @@
-import React from 'react';
-import { TrendingUp, Home, Users, HelpCircle, LogOut, Menu, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';   // ✅ Import navigate hook
+import React, { useState, useRef, useEffect } from 'react';
+import { User, UserCircle, Gavel, LogOut, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+// Import your AuthService here
 import AuthService from '../services/authServices'; // adjust the path if needed
 
-const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
-  const navigate = useNavigate(); // ✅ Initialize navigate
+const Navbar = () => {
+  const [activeItem, setActiveItem] = useState('Home');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
-  const NavLink = ({ href, icon, label, isActive = false, onClick }) => (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 ${
-        isActive
-          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/40'
-          : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
+  const navItems = [
+    { name: 'Home', route: '/home' },
+    { name: 'About', route: '/about' },
+    { name: "FAQ's", route: '/faq' } // Add your FAQ route
+  ];
 
-  // 🔹 Logout handler
-  const handleLogout = async () => {
-    try {
-      const result = await AuthService.logout();
-      if (result.success) {
-        // ✅ Clear local auth data if any (like tokens)
-        localStorage.removeItem('user'); 
-        localStorage.removeItem('token'); 
+  const dropdownItems = [
+    { name: 'Profile', icon: UserCircle, desc: 'Manage your account' },
+    { name: 'My Auctions', icon: Gavel, desc: 'View registered auctions' },
+    { name: 'Logout', icon: LogOut, desc: 'Sign out of account', isLogout: true }
+  ];
 
-        // ✅ Redirect to signin page
-        navigate('/signin');
-      } else {
-        console.error('Logout failed:', result.message || 'Unknown error');
-        alert(result.message || 'Logout failed. Please try again.');
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
       }
-    } catch (err) {
-      console.error('Logout error:', err);
-      alert('Something went wrong during logout.');
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle navigation item clicks
+  const handleNavItemClick = (item) => {
+    setActiveItem(item.name);
+    navigate(item.route);
+  };
+
+  // Handle logo click - redirect to home
+  const handleLogoClick = () => {
+    setActiveItem('Home');
+    navigate('/home');
+  };
+
+  // Handle dropdown item clicks
+  const handleDropdownItemClick = async (itemName) => {
+    console.log(`${itemName} clicked`);
+    setIsDropdownOpen(false);
+    
+    if (itemName === 'Logout') {
+      try {
+        console.log('Logging out user...');
+        
+        // Call your AuthService logout function
+        const result = await AuthService.logout();
+        
+        if (result.success) {
+          console.log('Logout successful:', result);
+          
+          // Clear any local authentication data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          sessionStorage.clear();
+          
+          // Redirect to signin page
+          navigate('/signin');
+          
+          // Optional: Show success message
+          // You can replace this with a toast notification
+          // alert('Successfully logged out!');
+          
+        } else {
+          console.error('Logout failed:', result);
+          
+          // Handle different error cases
+          if (result.status === 401) {
+            // User already logged out or session expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            navigate('/signin');
+          } else {
+            // Other server errors
+            alert(result.message || 'Logout failed. Please try again.');
+          }
+        }
+        
+      } catch (error) {
+        console.error('Logout error:', error);
+        
+        // Network or unexpected error
+        alert('Network error occurred during logout. Please try again.');
+        
+        // Optional: Still redirect to signin if network error persists
+        // localStorage.removeItem('token');
+        // localStorage.removeItem('user');
+        // sessionStorage.clear();
+        // navigate('/signin');
+      }
+    } else if (itemName === 'Profile') {
+      navigate('/profile');
+    } else if (itemName === 'My Auctions') {
+      navigate('/my-auctions');
     }
   };
 
   return (
-    <nav className="relative bg-slate-800/90 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <div className="font-bold text-xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Quantum Bid
+    <nav className="absolute top-0 left-0 right-0 z-50 pt-4 pb-2 bg-transparent pointer-events-none">
+      <div className="w-[90%] max-w-6xl mx-auto pointer-events-auto">
+      <div className="flex justify-between items-center space-x-4">
+
+        {/* Left Capsule - Quantum-BID Logo in capsule form */}
+        <button 
+          onClick={handleLogoClick}
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full px-6 py-3 shadow-2xl border border-blue-400/30 hover:shadow-blue-500/25 transition-all duration-500 hover:scale-105 flex items-center space-x-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        >
+          {/* Atom Symbol Container */}
+          <div className="flex items-center justify-center">
+            {/* Clean Simple Atom Symbol - matching the image */}
+            <div className="relative w-6 h-6">
+              {/* Central nucleus dot */}
+              <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              
+              {/* Electron particles around */}
+              <div className="absolute top-1 left-2 w-1 h-1 bg-white/80 rounded-full"></div>
+              <div className="absolute top-2 left-0.5 w-0.5 h-0.5 bg-white/60 rounded-full"></div>
+              <div className="absolute top-3.5 left-1 w-0.5 h-0.5 bg-white/60 rounded-full"></div>
+              <div className="absolute top-1.5 right-0.5 w-0.5 h-0.5 bg-white/60 rounded-full"></div>
+              <div className="absolute bottom-1 right-2 w-1 h-1 bg-white/80 rounded-full"></div>
+              <div className="absolute bottom-2 right-0.5 w-0.5 h-0.5 bg-white/60 rounded-full"></div>
+              
+              {/* Simple orbital rings - non-rotating, clean style */}
+              <div className="absolute inset-0">
+                <div className="w-6 h-6 border border-white/30 rounded-full"></div>
+                <div className="absolute top-1/2 left-1/2 w-4 h-4 border border-white/20 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              </div>
             </div>
           </div>
-
-          {/* Center Navigation - Desktop */}
-          <div className="hidden md:flex items-center gap-2">
-            <NavLink 
-              href="#home" 
-              icon={<Home className="w-4 h-4" />} 
-              label="Home" 
-              isActive={true}
-            />
-            <NavLink 
-              href="#about" 
-              icon={<Users className="w-4 h-4" />} 
-              label="About Us" 
-            />
-            <NavLink 
-              href="#faqs" 
-              icon={<HelpCircle className="w-4 h-4" />} 
-              label="FAQs" 
-            />
+          
+          {/* Text Content */}
+          <div>
+            <span className="text-white font-bold text-base tracking-wide">Quantum-BID</span>
           </div>
+        </button>
 
-          {/* Logout Button - Desktop */}
-          <div className="hidden md:block">
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-red-500/40"
+        {/* Center Capsule - Navigation */}
+        <div className="bg-black/20 backdrop-blur-xl rounded-full px-6 py-3 shadow-2xl border border-white/10 flex items-center space-x-2">
+          {navItems.map((item) => (
+            <button
+              key={item.name}
+              onClick={() => handleNavItemClick(item)}
+              className={`relative px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                activeItem === item.name
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg backdrop-blur-sm border border-blue-400/50 shadow-blue-500/30'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+              }`}
             >
-              <LogOut className="w-4 h-4" />
-              Logout
+              {item.name}
             </button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-6 h-6 text-white" />
-            ) : (
-              <Menu className="w-6 h-6 text-white" />
-            )}
-          </button>
+          ))}
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
-            <div className="px-4 py-4 space-y-2">
-              <NavLink 
-                href="#home" 
-                icon={<Home className="w-4 h-4" />} 
-                label="Home" 
-                isActive={true}
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-              <NavLink 
-                href="#about" 
-                icon={<Users className="w-4 h-4" />} 
-                label="About Us"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-              <NavLink 
-                href="#faqs" 
-                icon={<HelpCircle className="w-4 h-4" />} 
-                label="FAQs"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-              <div className="h-px bg-slate-600 my-3"></div>
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl transition-all duration-300"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+        {/* Right Capsule - Professional Profile Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className={`group bg-gradient-to-br from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 rounded-full p-4 shadow-2xl border border-slate-600/30 flex items-center justify-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+              isDropdownOpen ? 'ring-2 ring-blue-500/50 shadow-blue-500/30 bg-gradient-to-br from-blue-500/10 to-blue-600/10' : ''
+            }`}
+          >
+            <div className="relative">
+              <User className="w-5 h-5 text-slate-300 group-hover:text-white transition-colors" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-slate-800"></div>
             </div>
-          </div>
-        )}
+            <ChevronDown className={`w-3 h-3 text-slate-400 ml-2 transition-all duration-300 ${
+              isDropdownOpen ? 'rotate-180 text-blue-400' : 'group-hover:text-white'
+            }`} />
+          </button>
+
+          {/* Professional Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute right-0 top-full mt-3 w-72 bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300">
+              
+              {/* User Info Header */}
+              <div className="px-6 py-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-b border-slate-700/50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-sm">John Doe</h3>
+                    <p className="text-slate-400 text-xs">Premium Bidder</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Items */}
+              <div className="py-2">
+                {dropdownItems.map((item, index) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => handleDropdownItemClick(item.name)}
+                      className={`w-full flex items-center px-6 py-3 text-sm font-medium transition-all duration-200 group focus:outline-none focus:bg-blue-500/20 ${
+                        item.isLogout 
+                          ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10 border-t border-slate-700/50 mt-2' 
+                          : 'text-slate-300 hover:text-white hover:bg-blue-500/10'
+                      }`}
+                    >
+                      <div className={`p-2 rounded-lg mr-3 transition-all duration-200 ${
+                        item.isLogout 
+                          ? 'bg-red-500/10 group-hover:bg-red-500/20' 
+                          : 'bg-blue-500/10 group-hover:bg-blue-500/20'
+                      }`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-xs text-slate-500 group-hover:text-slate-400">{item.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Footer */}
+              <div className="px-6 py-3 bg-slate-800/50 border-t border-slate-700/50">
+                <div className="flex items-center justify-end text-xs text-slate-500">
+                  <span className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Online</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        </div>
       </div>
     </nav>
   );

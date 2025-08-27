@@ -216,6 +216,12 @@ const Signup = () => {
     navigate('/signin'); // Correct lowercase
   };
 
+  // navigate to signin page function
+    const handleRedirectToSignup = () => {
+      navigate('/Signup'); // Signup is routed at "/"
+    };
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8 relative overflow-hidden">
       <BackgroundEffects />
@@ -292,6 +298,7 @@ const Signup = () => {
             {/* Step 4: Success */}
             {currentStep === 4 && (
               <SuccessStep onStartBidding={handleStartBidding} />
+
             )}
           </div>
         </div>

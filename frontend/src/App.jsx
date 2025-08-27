@@ -6,21 +6,21 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AuctionHomepage from "./pages/Auctions/AuctionHome";
 import AuctionRegistrationForm from './components/auction/AuctionRegistrationForm';
-
+import LiveAuction from "./pages/Auctions/LiveAuction";
 import Landing from "./pages/Landing";
 
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing/>} />  {/* 👈 now landing page is root */}
+      <Route path="/" element={<Landing/>} />   
       <Route path="/signup" element={<Signup />} />
       <Route path="/signin" element={<Signin />} />
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/home" element={<AuctionHomepage />} />
       <Route path="/auction-registration" element={<AuctionRegistrationForm />} />
-
+ <Route path="/live-auction" element={<LiveAuction />} /> 
     </Routes>
   );
 }
