@@ -102,3 +102,13 @@ export const getBidderKey = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+export const getbidderid = async(req, res) => {
+  try {
+    // req.user is populated by protectRoute middleware
+    res.status(200).json({ userId: req.user._id });
+  } catch (err) {
+    console.error("Error getting bidder ID:", err.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

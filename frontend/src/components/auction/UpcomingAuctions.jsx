@@ -5,6 +5,33 @@ import RegistrationModal from "./RegistrationModal";
 import ViewAuctionModal from "./ViewAuctionModal";
 
 const UpcomingAuctions = ({ userId }) => {
+  const [currentBidderId, setCurrentBidderId] = useState(null);
+  useEffect(() => {
+    const fetchCurrentBidder = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:9000/api/bids/get-bidder-id",
+          {
+            method: "GET",
+            credentials: "include", // include cookies if JWT is stored there
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch current bidder");
+        }
+
+        const data = await res.json();
+        console.log("Current logged-in bidder ID:", data.userId);
+        setCurrentBidderId(data.userId);
+      } catch (err) {
+        console.error("Error fetching current bidder:", err);
+      }
+    };
+
+    fetchCurrentBidder();
+  }, []);
+  userId  =currentBidderId
   const [upcomingAuctions, setUpcomingAuctions] = useState([]);
   const [registeredAuctions, setRegisteredAuctions] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -22,7 +49,7 @@ const UpcomingAuctions = ({ userId }) => {
           axios.get("http://localhost:9000/api/auctions/upcoming"),
           userId
             ? axios.get(
-                `http://localhost:9000/api/auctions/registered/${userId}`
+                `http://localhost:9000/api/auctionRegistrations/registered/${userId}`
               )
             : Promise.resolve({ data: { registeredAuctionIds: [] } }),
         ]);
@@ -194,6 +221,7 @@ const UpcomingAuctions = ({ userId }) => {
             selectedAuction={{
               ...selectedAuction,
               basePrice: selectedAuction.baseAmount,
+              
             }}
             isOpen={!!selectedAuction}
             paymentDone={selectedAuction?.paymentDone} // pass it here

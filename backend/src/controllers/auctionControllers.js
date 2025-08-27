@@ -80,32 +80,27 @@ export const getUpcomingAuctions = async (req, res) => {
         startDate.getMonth() + 1
       )
         .toString()
-        .padStart(
-          2,
-          "0"
-        )}-${startDate.getFullYear()} ${startDate.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
+        .padStart(2, "0")}-${startDate.getFullYear()} ${startDate.toLocaleTimeString(
+        "en-GB",
+        { hour: "2-digit", minute: "2-digit" }
+      )}`;
 
       const endTime = `${endDate.getDate().toString().padStart(2, "0")}-${(
         endDate.getMonth() + 1
       )
         .toString()
-        .padStart(
-          2,
-          "0"
-        )}-${endDate.getFullYear()} ${endDate.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
+        .padStart(2, "0")}-${endDate.getFullYear()} ${endDate.toLocaleTimeString(
+        "en-GB",
+        { hour: "2-digit", minute: "2-digit" }
+      )}`;
 
       return {
         _id: auction._id,
         title: auction.title,
-        auctioneer: auction.auctionerId?.name || "Unknown",
-        startTime, // ✅ Date + Time
-        endTime, // ✅ Date + Time
+        auctioneer: auction.auctionerId?.name || "Unknown", // name
+        auctionerId: auction.auctionerId?._id || null, // separate id
+        startTime,
+        endTime,
         baseAmount: auction.basePrice || 0,
       };
     });

@@ -108,7 +108,7 @@ const RegistrationModal = ({
       });
       if (!keyResponse.ok) throw new Error("Key generation failed");
       const keyData = await keyResponse.json();
-      const generatedKey = keyData.key;
+      const generatedKey = keyData.auctioner_key;
       console.log("Submitting Registration Payload:", {
         auctionerId: selectedAuction.auctionerId,
         auctionId: selectedAuction._id,

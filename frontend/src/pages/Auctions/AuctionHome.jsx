@@ -10,6 +10,8 @@ import CompletedAuctions from "../../components/auction/CompletedAuctions";
 // At the top of AuctionHomepage
 const storedUser = localStorage.getItem("user");
 const user = storedUser ? JSON.parse(storedUser) : null;
+
+
 const userId = user?._id; // dynamic userId
 
 const AuctionHomepage = () => {
