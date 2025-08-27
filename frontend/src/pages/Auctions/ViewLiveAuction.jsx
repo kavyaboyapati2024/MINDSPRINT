@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, Users, Shield, Lock, Eye, IndianRupee, Timer, Gavel, Trophy, Star, CheckCircle } from 'lucide-react';
+import { Clock, Users, Shield, Lock, Eye, IndianRupee, Timer, Gavel, Trophy, Star, UserCheck, UserX, AlertCircle } from 'lucide-react';
 
-const LiveAuction = () => {
+const ViewLiveAuction = () => {
   const [timeRemaining, setTimeRemaining] = useState({
     hours: 0,
     minutes: 0,
-    seconds: 20
+    seconds: 10
   });
   const [bidAmount, setBidAmount] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -14,17 +14,19 @@ const LiveAuction = () => {
   const [auctionEnded, setAuctionEnded] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [winner, setWinner] = useState(null);
-  const [hasSubmittedBid, setHasSubmittedBid] = useState(false);
-  const [userBidAmount, setUserBidAmount] = useState(null);
+  
+  // New state for registration status
+  const [isRegistered, setIsRegistered] = useState(false); // Set to false to simulate non-registered user
+  const [userStatus, setUserStatus] = useState('viewer'); // 'registered', 'viewer', 'pending'
 
-  // Mock bidders data with bid amounts and encrypted bids (hidden during auction)
+  // Mock bidders data with bid amounts and encrypted representations
   const bidders = [
-    { id: 1, name: 'Bidder #001', bidAmount: 250000, encryptedBid: 'BID-7A9F3E2D' },
-    { id: 2, name: 'Bidder #007', bidAmount: 180000, encryptedBid: 'BID-5B8C1F4A' },
-    { id: 3, name: 'Bidder #023', bidAmount: 320000, encryptedBid: 'BID-9E2D6C8B' },
-    { id: 4, name: 'Bidder #045', bidAmount: 0, encryptedBid: 'BID-3F7A9D1E' },
-    { id: 5, name: 'Bidder #078', bidAmount: 275000, encryptedBid: 'BID-8C4E2F9A' },
-    { id: 6, name: 'Bidder #091', bidAmount: 0, encryptedBid: 'BID-1D5B8F3C' }
+    { id: 1, name: 'Bidder #001', bidAmount: 250000, encryptedBid: 'E7A9F2B4C8D1' },
+    { id: 2, name: 'Bidder #007', bidAmount: 180000, encryptedBid: 'B3E8A1F5D9C2' },
+    { id: 3, name: 'Bidder #023', bidAmount: 320000, encryptedBid: 'F1D4B7E2A9C6' },
+    { id: 4, name: 'Bidder #045', bidAmount: 195000, encryptedBid: 'C8F2D5A1B4E7' },
+    { id: 5, name: 'Bidder #078', bidAmount: 275000, encryptedBid: 'A6C9F3B8E1D4' },
+    { id: 6, name: 'Bidder #091', bidAmount: 210000, encryptedBid: 'D2B5F8C1A7E3' }
   ];
 
   useEffect(() => {
@@ -57,15 +59,12 @@ const LiveAuction = () => {
         // Check if time has reached zero
         if (newHours <= 0 && newMinutes <= 0 && newSeconds <= 0) {
           setAuctionEnded(true);
-          // Determine winner from all bidders who have bid amounts > 0
-          const validBidders = bidders.filter(b => b.bidAmount > 0);
-          if (validBidders.length > 0) {
-            const winningBidder = validBidders.reduce((prev, current) => 
-              (prev.bidAmount > current.bidAmount) ? prev : current
-            );
-            setWinner(winningBidder);
-            setTimeout(() => setShowWinnerModal(true), 1000);
-          }
+          // Determine winner
+          const winningBidder = bidders.reduce((prev, current) => 
+            (prev.bidAmount > current.bidAmount) ? prev : current
+          );
+          setWinner(winningBidder);
+          setTimeout(() => setShowWinnerModal(true), 1000);
           return { hours: 0, minutes: 0, seconds: 0 };
         }
 
@@ -81,15 +80,13 @@ const LiveAuction = () => {
   }, [auctionEnded]);
 
   const handleSubmitBid = () => {
-    if (bidAmount && parseFloat(bidAmount) > 0 && !auctionEnded && !hasSubmittedBid) {
+    if (bidAmount && parseFloat(bidAmount) > 0 && !auctionEnded && isRegistered) {
       setShowConfirmation(true);
     }
   };
 
   const confirmBid = () => {
-    setUserBidAmount(parseFloat(bidAmount));
-    setHasSubmittedBid(true);
-    alert(`Sealed bid of ₹${bidAmount} submitted successfully! You cannot modify or submit another bid.`);
+    alert(`Sealed bid of ₹${bidAmount} submitted successfully!`);
     setBidAmount('');
     setShowConfirmation(false);
   };
@@ -102,6 +99,24 @@ const LiveAuction = () => {
 
   const closeWinnerModal = () => {
     setShowWinnerModal(false);
+  };
+
+  const getStatusColor = () => {
+    if (userStatus === 'registered') return 'text-green-400';
+    if (userStatus === 'pending') return 'text-yellow-400';
+    return 'text-red-400';
+  };
+
+  const getStatusIcon = () => {
+    if (userStatus === 'registered') return <UserCheck className="w-4 h-4" />;
+    if (userStatus === 'pending') return <Clock className="w-4 h-4" />;
+    return <UserX className="w-4 h-4" />;
+  };
+
+  const getStatusText = () => {
+    if (userStatus === 'registered') return 'Registered Bidder';
+    if (userStatus === 'pending') return 'Registration Pending';
+    return 'Viewer Only';
   };
 
   return (
@@ -123,14 +138,20 @@ const LiveAuction = () => {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-6">
-        {/* Header */}
+        {/* Header with User Status */}
         <div className="text-center mb-8">
           <h1 className="text-3xl lg:text-4xl font-black text-sky-400 mb-2">Live Auction</h1>
-          <div className="flex items-center justify-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${auctionEnded ? 'bg-red-400' : 'bg-green-400'}`}></div>
-            <span className="text-white font-medium">
-              {auctionEnded ? 'Auction Ended' : 'Auction in Progress'}
-            </span>
+          <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${auctionEnded ? 'bg-red-400' : 'bg-green-400'}`}></div>
+              <span className="text-white font-medium">
+                {auctionEnded ? 'Auction Ended' : 'Auction in Progress'}
+              </span>
+            </div>
+            <div className={`flex items-center space-x-2 ${getStatusColor()}`}>
+              {getStatusIcon()}
+              <span className="font-medium">{getStatusText()}</span>
+            </div>
           </div>
         </div>
 
@@ -250,23 +271,19 @@ const LiveAuction = () => {
             {/* Bid Submission */}
             <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-2xl rounded-2xl p-6 border border-sky-500/30 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
               <h3 className="text-lg font-bold text-sky-400 mb-4 text-center">
-                {auctionEnded ? 'Bidding Closed' : hasSubmittedBid ? 'Bid Submitted' : 'Place Your Sealed Bid'}
+                {auctionEnded ? 'Bidding Closed' : isRegistered ? 'Place Your Sealed Bid' : 'Bidding (Registration Required)'}
               </h3>
               
-              {/* Show user's submitted bid if they have one */}
-              {hasSubmittedBid && !auctionEnded && (
-                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-green-400 font-semibold">Bid Successfully Submitted</span>
+              {/* Registration Required Notice */}
+              {!isRegistered && !auctionEnded && (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-3">
+                    <UserX className="w-5 h-5 text-orange-400" />
+                    <div>
+                      <p className="text-orange-300 font-semibold text-sm">Registration Required</p>
+                      <p className="text-orange-200 text-xs mt-1">Complete registration to participate in bidding</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 text-sm">Your Bid Amount:</span>
-                    <span className="text-white font-bold">₹{userBidAmount?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Your bid is sealed and will remain confidential until the auction ends.
-                  </p>
                 </div>
               )}
 
@@ -281,17 +298,17 @@ const LiveAuction = () => {
                       type="number"
                       value={bidAmount}
                       onChange={(e) => setBidAmount(e.target.value)}
-                      disabled={auctionEnded || hasSubmittedBid}
+                      disabled={auctionEnded || !isRegistered}
                       className={`w-full pl-10 pr-4 py-3 border rounded-xl text-white placeholder-slate-400 transition-all duration-300 ${
-                        auctionEnded || hasSubmittedBid 
+                        auctionEnded || !isRegistered
                           ? 'bg-slate-700/50 border-slate-600/50 cursor-not-allowed' 
                           : 'bg-slate-800/80 border-slate-600/50 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20'
                       }`}
                       placeholder={
                         auctionEnded 
                           ? "Auction has ended" 
-                          : hasSubmittedBid 
-                            ? "You have already submitted your bid"
+                          : !isRegistered 
+                            ? "Registration required" 
                             : "Enter your bid amount"
                       }
                       min="100000"
@@ -301,8 +318,8 @@ const LiveAuction = () => {
                   <p className="text-xs text-slate-400 mt-1">
                     {auctionEnded 
                       ? 'No more bids accepted' 
-                      : hasSubmittedBid 
-                        ? 'You can only submit one bid per auction'
+                      : !isRegistered 
+                        ? 'Please register to place bids' 
                         : 'Minimum bid: ₹1,00,000.00'
                     }
                   </p>
@@ -311,8 +328,8 @@ const LiveAuction = () => {
                 <div className={`rounded-lg p-3 border ${
                   auctionEnded 
                     ? 'bg-red-800/20 border-red-600/30' 
-                    : hasSubmittedBid
-                      ? 'bg-green-800/20 border-green-600/30'
+                    : !isRegistered
+                      ? 'bg-orange-800/20 border-orange-600/30'
                       : 'bg-slate-800/30 border-slate-600/30'
                 }`}>
                   <div className="flex items-center space-x-2 mb-2">
@@ -321,10 +338,10 @@ const LiveAuction = () => {
                         <Trophy className="w-4 h-4 text-yellow-400" />
                         <span className="text-yellow-400 text-sm font-medium">Auction Completed</span>
                       </>
-                    ) : hasSubmittedBid ? (
+                    ) : !isRegistered ? (
                       <>
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                        <span className="text-green-400 text-sm font-medium">Bid Confirmed</span>
+                        <UserX className="w-4 h-4 text-orange-400" />
+                        <span className="text-orange-400 text-sm font-medium">Registration Required</span>
                       </>
                     ) : (
                       <>
@@ -336,8 +353,8 @@ const LiveAuction = () => {
                   <p className="text-xs text-slate-300">
                     {auctionEnded 
                       ? 'The auction has ended and the winner has been determined based on the highest sealed bid.'
-                      : hasSubmittedBid
-                        ? 'Your bid has been recorded and encrypted. You cannot submit another bid or modify your existing bid.'
+                      : !isRegistered
+                        ? 'You are currently viewing this auction as a guest. Complete registration to participate in bidding and place sealed bids.'
                         : 'Your bid amount will remain completely confidential and encrypted until the auction ends. No other bidders can see your bid.'
                     }
                   </p>
@@ -345,9 +362,9 @@ const LiveAuction = () => {
 
                 <button
                   onClick={handleSubmitBid}
-                  disabled={auctionEnded || hasSubmittedBid}
+                  disabled={auctionEnded || !isRegistered}
                   className={`w-full font-bold py-4 px-6 rounded-xl transition-all duration-300 ${
-                    auctionEnded || hasSubmittedBid 
+                    auctionEnded || !isRegistered
                       ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
                       : 'bg-sky-500 hover:bg-sky-400 text-white shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)]'
                   }`}
@@ -357,11 +374,6 @@ const LiveAuction = () => {
                       <>
                         <Clock className="w-5 h-5 mr-2" />
                         Bidding Closed
-                      </>
-                    ) : hasSubmittedBid ? (
-                      <>
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Bid Submitted
                       </>
                     ) : (
                       <>
@@ -493,6 +505,10 @@ const LiveAuction = () => {
                 <Clock className="w-4 h-4 text-sky-400" />
                 <span className="text-slate-300 text-sm">Real-time Updates</span>
               </div>
+              <div className={`flex items-center space-x-2 ${getStatusColor()}`}>
+                {getStatusIcon()}
+                <span className="text-sm">{getStatusText()}</span>
+              </div>
             </div>
             <div className="text-slate-400 text-sm">
               Auction ID: #AUC-2024-001
@@ -510,6 +526,7 @@ const LiveAuction = () => {
             
             <div className="relative z-10">
               <div className="text-center mb-6">
+                
                 <h3 className="text-xl font-bold text-white mb-2">Confirm Your Bid</h3>
                 <p className="text-slate-300 text-sm">
                   Are you sure you want to submit your sealed bid?
@@ -519,7 +536,7 @@ const LiveAuction = () => {
               <div className="bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-700/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-slate-300 text-sm">Your Bid Amount:</span>
-                  <span className="text-white font-bold text-lg">₹{parseFloat(bidAmount || 0).toLocaleString('en-IN')}</span>
+                  <span className="text-white font-bold text-lg">₹{parseFloat(bidAmount).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
                   <Lock className="w-3 h-3" />
@@ -534,7 +551,7 @@ const LiveAuction = () => {
                   </div>
                   <div className="text-xs text-yellow-200">
                     <p className="font-medium mb-1">Important:</p>
-                    <p>Once submitted, your bid cannot be modified, withdrawn, or replaced with another bid. You can only submit ONE bid per auction.</p>
+                    <p>Once submitted, your bid cannot be modified or withdrawn. Please ensure the amount is correct.</p>
                   </div>
                 </div>
               </div>
@@ -565,6 +582,8 @@ const LiveAuction = () => {
       {showWinnerModal && winner && (
         <div className="fixed inset-0 bg-slate/80 backdrop-blur-lg flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 border border-yellow-500/50 shadow-[0_0_80px_rgba(0,0,0,0.9)] max-w-lg w-full relative overflow-hidden">
+            
+            
             <div className="relative z-10 text-center">
               <div className="mb-6">
                 <h2 className="text-3xl font-black text-yellow-400 mb-2">WINNER</h2>
@@ -585,6 +604,8 @@ const LiveAuction = () => {
                 </div>
               </div>
 
+              
+
               <div className="flex space-x-3">
                 <button
                   onClick={closeWinnerModal}
@@ -595,6 +616,8 @@ const LiveAuction = () => {
                   </span>
                 </button>
               </div>
+
+            
             </div>
           </div>
         </div>
@@ -603,4 +626,4 @@ const LiveAuction = () => {
   );
 };
 
-export default LiveAuction;
+export default ViewLiveAuction;
