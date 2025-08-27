@@ -7,7 +7,8 @@ import {
   getAuctionEndTime,
   getAuctionStartingBid,
   getAuctionFile,
-  isRegisteredForAuction
+  isRegisteredForAuction,
+  getOngoingAuctionsById
 } from "../controllers/auctionControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
@@ -28,5 +29,7 @@ router.post("/get-auction-starting-bid", getAuctionStartingBid);
 router.get("/auction-file/:auctionId", getAuctionFile);
 
 router.post("/check-registration-status", isRegisteredForAuction)
+
+router.post("/ongoing-by-id", getOngoingAuctionsById)
 
 export default router;

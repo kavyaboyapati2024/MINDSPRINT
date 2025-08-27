@@ -1,4 +1,5 @@
 import Auction from "../models/auctionModel.js";
+import Aucioner from "../models/auctionerModel.js"
 import AuctionRegistration from "../models/auctionRegistrationModel.js";
 
 //create an auction
@@ -185,5 +186,41 @@ export const isRegisteredForAuction = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error" });
+  }
+}
+
+export const getOngoingAuctionsById = async (req, res) => {
+  try {
+    const { userId } = req.body; // Get userId from request body
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    // Fetch auctions and populate auctioner name
+    const auctions = await Auction.find({ status: "ongoing"}, "auctionerId title endDateTime")
+      .populate("auctionerId", "name");
+
+    // For each auction, check if user is registered
+    const formattedAuctions = await Promise.all(
+      auctions.map(async (auction) => {
+        const registration = await AuctionRegistration.findOne({
+          auctionId: auction._id,
+          userId,
+        });
+
+        return {
+          _id: auction._id,
+          title: auction.title,
+          endDateTime: auction.endDateTime,
+          auctionerName: auction.auctionerId.name,
+          isRegistered: !!registration, // true if registration exists, else false
+        };
+      })
+    );
+
+    res.status(200).json(formattedAuctions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 }
