@@ -1,4 +1,5 @@
 import Auction from "../models/auctionModel.js";
+import AuctionRegistration from "../models/auctionRegistrationModel.js";
 
 //create an auction
 export const createAuction = async (req, res) => {
@@ -92,3 +93,97 @@ export const getPastAuctions = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+export const getAuctionEndTime = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("endDateTime");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      endDateTime: auction.endDateTime,
+    });
+  } catch (error) {
+    console.error("Error fetching auction end time:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+export const getAuctionStartingBid = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("basePrice");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      startingBid: auction.basePrice,
+    });
+  } catch (error) {
+    console.error("Error fetching auction starting bid:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getAuctionFile = async (req, res) => {
+  try {
+    const { auctionId } = req.params; // GET /auction-file/:auctionId
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("file");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      file: auction.file, // return the file path or URL
+    });
+  } catch (error) {
+    console.error("Error fetching auction file:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const isRegisteredForAuction = async (req, res) => {
+  try {
+    const { auctionId, userId } = req.body;
+
+    if (!auctionId || !userId) {
+      return res.status(400).json({ error: "auctionId and userId are required" });
+    }
+
+    // Check registration in AuctionRegistration collection
+    const registration = await AuctionRegistration.findOne({
+      auctionId,
+      userId,
+    }).lean();
+
+    const isRegistered = !!registration;
+
+    return res.status(200).json({ registered: isRegistered });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}

@@ -15,14 +15,7 @@ const bidSchema = new mongoose.Schema(
     amount: {
       type: String,
       required: true, // encrypt before saving if you want secure bids
-    },
-    iv: {
-      type: String, // IV in base64 (needed for decryption)
-      required: true,
-    },
-     bidHash: {
-      type: String, // optional, to verify when revealing
-    },
+    }
   },
   { timestamps: true }
 );
