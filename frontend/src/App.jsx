@@ -18,7 +18,7 @@ import MyAuctions from "./pages/MyAuctions";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing/>} />  {/* 👈 now landing page is root */}
+      <Route path="/" element={<Landing/>} />   
       <Route path="/signup" element={<Signup />} />
       <Route path="/signin" element={<Signin />} />
       <Route path="/update-password" element={<UpdatePassword />} />
