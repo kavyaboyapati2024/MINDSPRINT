@@ -156,6 +156,17 @@ const Signup = () => {
       );
       
       if (response.success) {
+        // Save user data for profile page
+        const userData = {
+          userName: formData.userName,
+          email: formData.email,
+          joinDate: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long' 
+          })
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
         setCurrentStep(4);
       } else {
         setErrors({ 

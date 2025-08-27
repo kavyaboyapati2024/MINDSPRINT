@@ -3,38 +3,62 @@ import Auction from "../models/auctionModel.js";
 //create an auction
 export const createAuction = async (req, res) => {
   try {
-    const { title, description, basePrice, minIncrement, auctionDate, startTime, endTime } = req.body;
-
-    if (!title || !description || !basePrice || !minIncrement || !auctionDate || !startTime || !endTime) {
-      return res.status(400).json({ error: "All required fields must be provided" });
-    }
-
-    if (!req.file) return res.status(400).json({ error: "Image file is required" });
-
-    const fileBase64 = req.file.buffer.toString("base64");
-
-    // Convert auctionDate + startTime / endTime to UTC Date objects
-    const startDateTime = new Date(`${auctionDate}T${startTime}:00`);
-    const endDateTime = new Date(`${auctionDate}T${endTime}:00`);
-
-    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-      return res.status(400).json({ error: "Invalid date or time format" });
-    }
-
-    const auction = new Auction({
+    const {
+      auctionerId,
       title,
       description,
       basePrice,
-      minIncrement,
       startDateTime,
       endDateTime,
+    } = req.body;
+
+    // ✅ Validate required fields
+    if (
+      !auctionerId ||
+      !title ||
+      !description ||
+      !basePrice ||
+      !startDateTime ||
+      !endDateTime
+    ) {
+      return res
+        .status(400)
+        .json({ error: "All required fields must be provided" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Image file is required" });
+    }
+
+    // ✅ Convert image buffer to base64
+    const fileBase64 = req.file.buffer.toString("base64");
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: "Invalid date or time format" });
+    }
+
+    // ✅ Create auction document
+    const auction = new Auction({
+      auctionerId, // 🔹 Added auctionerId
+      title,
+      description,
+      basePrice,
+      startDateTime: start,
+      endDateTime: end,
       file: fileBase64,
     });
 
     await auction.save();
 
-    return res.status(201).json({ message: "Auction created successfully", auction });
+    return res.status(201).json({
+      message: "Auction created successfully",
+      auction,
+    });
   } catch (error) {
+    console.error("Error creating auction:", error);
     return res.status(500).json({ error: error.message });
   }
 };
