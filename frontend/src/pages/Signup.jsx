@@ -156,6 +156,17 @@ const Signup = () => {
       );
       
       if (response.success) {
+        // Save user data for profile page
+        const userData = {
+          userName: formData.userName,
+          email: formData.email,
+          joinDate: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long' 
+          })
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
         setCurrentStep(4);
       } else {
         setErrors({ 
@@ -225,7 +236,7 @@ const Signup = () => {
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
               style={{textShadow: '0 0 20px rgba(125, 211, 252, 0.3)'}}>
-            EQ-Auction
+            Quantum-Bid
           </h1>
           <p className="text-slate-300/90 text-base sm:text-lg font-medium px-4 sm:px-0"
              style={{textShadow: '0 0 10px rgba(148, 163, 184, 0.2)'}}>

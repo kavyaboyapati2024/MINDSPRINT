@@ -10,6 +10,9 @@ import Landing from "./pages/Landing";
 import AboutUs from "./pages/Auctions/AboutUs";
 import Faqs from "./pages/Auctions/Faqs";
 import LiveAuction from "./pages/Auctions/LiveAuction";
+import ViewLiveAuction from "./pages/Auctions/ViewLiveAuction";
+import UserProfile from "./pages/UserProfile";
+import MyAuctions from "./pages/MyAuctions";
 
 
 function App() {
@@ -24,6 +27,9 @@ function App() {
       <Route path="/live" element={<LiveAuction/>}/>
       <Route path="/about" element={<AboutUs/>}/>
       <Route path="/faqs" element={<Faqs/>}/>
+      <Route path="/view-auction" element={<ViewLiveAuction/>}/>
+      <Route path="/profile" element={<UserProfile/>}/>
+      <Route path="my-auctions" element={<MyAuctions/>}/>
     </Routes>
   );
 }
