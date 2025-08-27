@@ -4,11 +4,8 @@ import {
   getOngoingAuctions,
   getUpcomingAuctions,
   getPastAuctions,
-  getAuctionEndTime,
-  getAuctionStartingBid,
-  getAuctionFile,
-  isRegisteredForAuction,
-  getOngoingAuctionsById
+  getAuctionById,
+  getAuctionImage
 } from "../controllers/auctionControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
@@ -22,14 +19,8 @@ router.get("/ongoing", getOngoingAuctions);
 
 router.get("/past", getPastAuctions);
 
-router.post("/get-end-time", getAuctionEndTime);
+router.get("/:id", getAuctionById);
 
-router.post("/get-auction-starting-bid", getAuctionStartingBid);
-
-router.get("/auction-file/:auctionId", getAuctionFile);
-
-router.post("/check-registration-status", isRegisteredForAuction)
-
-router.post("/ongoing-by-id", getOngoingAuctionsById)
+router.get("/:id/image", getAuctionImage);
 
 export default router;
