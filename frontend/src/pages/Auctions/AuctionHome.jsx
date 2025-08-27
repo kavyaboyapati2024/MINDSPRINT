@@ -415,7 +415,8 @@ const AuctionHomepage = () => {
         </div>
       )}
     </div>
-  );
-};
-
+    </div>
+    </div>
+  )
+}
 export default AuctionHomepage;
