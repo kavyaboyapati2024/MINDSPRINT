@@ -154,10 +154,10 @@ const AuctionHomepage = () => {
     </button>
   );
 
-  const handleRegister = (auction) => {
-    setSelectedAuction(auction);
-    setShowRegistrationModal(true);
-  };
+  // const handleRegister = (auction) => {
+  //   setSelectedAuction(auction);
+  //   setShowRegistrationModal(true);
+  // };
 
   // Remove the handleView function as it's now handled in UpcomingAuctions component
   // const handleView = (auction) => {
@@ -195,6 +195,13 @@ const AuctionHomepage = () => {
   };
 
   return (
+<div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+  {/* Navbar */}
+  <Navbar 
+    isMobileMenuOpen={isMobileMenuOpen} 
+    setIsMobileMenuOpen={setIsMobileMenuOpen} 
+    className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-transparent backdrop-blur-md"
+  />
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <Navbar
         isMobileMenuOpen={isMobileMenuOpen}
@@ -202,6 +209,16 @@ const AuctionHomepage = () => {
       />
 
       {/* Header Section */}
+      <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden pt-32">
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10"></div>
+    <div className="relative max-w-7xl mx-auto px-4 py-8 text-center">
+      <h1 className="text-7xl font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+        Quantum Bid
+      </h1>
+      <p className="text-lg text-slate-300 max-w-3xl mx-auto mb-6 leading-relaxed">
+        Experience the future of professional auctions with our cutting-edge platform. 
+        Secure, transparent, and trusted by industry leaders worldwide.
+      </p>
       <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-8 text-center">

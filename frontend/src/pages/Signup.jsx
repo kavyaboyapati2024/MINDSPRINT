@@ -156,6 +156,17 @@ const Signup = () => {
       );
       
       if (response.success) {
+        // Save user data for profile page
+        const userData = {
+          userName: formData.userName,
+          email: formData.email,
+          joinDate: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long' 
+          })
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
         setCurrentStep(4);
       } else {
         setErrors({ 
@@ -216,6 +227,12 @@ const Signup = () => {
     navigate('/signin'); // Correct lowercase
   };
 
+  // navigate to signin page function
+    const handleRedirectToSignup = () => {
+      navigate('/Signup'); // Signup is routed at "/"
+    };
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8 relative overflow-hidden">
       <BackgroundEffects />
@@ -225,7 +242,7 @@ const Signup = () => {
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
               style={{textShadow: '0 0 20px rgba(125, 211, 252, 0.3)'}}>
-            EQ-Auction
+            Quantum-Bid
           </h1>
           <p className="text-slate-300/90 text-base sm:text-lg font-medium px-4 sm:px-0"
              style={{textShadow: '0 0 10px rgba(148, 163, 184, 0.2)'}}>
@@ -292,6 +309,7 @@ const Signup = () => {
             {/* Step 4: Success */}
             {currentStep === 4 && (
               <SuccessStep onStartBidding={handleStartBidding} />
+
             )}
           </div>
         </div>

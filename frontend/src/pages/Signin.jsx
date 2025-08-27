@@ -182,6 +182,9 @@ const Signin = () => {
       <div className="relative z-10 w-full max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
+            style={{ textShadow: '0 0 20px rgba(125, 211, 252, 0.3)' }}>
+            Quantum-Bid
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
             style={{ textShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }}
