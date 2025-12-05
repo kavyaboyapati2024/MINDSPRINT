@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Zap, Users, Award, ChevronDown, ChevronUp, Atom, Eye, HelpCircle, CreditCard } from 'lucide-react';
+import { Shield, Users, ChevronDown, ChevronUp, Atom, Eye, HelpCircle } from 'lucide-react';
+import Navbar from '../../components/Navbar';
 
 const Faqs = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const faqCategories = [
     {
@@ -93,14 +95,13 @@ const Faqs = () => {
         }
       ]
     },
-   
     {
       title: "Technical Support",
       icon: <HelpCircle className="w-6 h-6" />,
       faqs: [
         {
           question: "What browsers are supported?",
-          answer: "EQ-Auction works on all modern browsers including Chrome, Firefox, Safari, and Edge. Our quantum-secured interface is optimized for both desktop and mobile devices."
+          answer: "Quantum-Bid works on all modern browsers including Chrome, Firefox, Safari, and Edge. Our quantum-secured interface is optimized for both desktop and mobile devices."
         },
         {
           question: "Do you offer 24/7 customer support?",
@@ -125,7 +126,13 @@ const Faqs = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
-      <div className="container mx-auto px-4 py-8">
+      {/* Navbar */}
+      <Navbar 
+        isMobileMenuOpen={isMobileMenuOpen} 
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+
+      <div className="container mx-auto px-4 py-8 pt-32">
         {/* Header Section */}
         <div className="text-center mb-16">
           <h1 className="text-3xl lg:text-3xl font-black text-sky-300 mb-6">

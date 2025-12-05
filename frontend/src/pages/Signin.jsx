@@ -5,7 +5,6 @@ import {
   Eye,
   EyeOff,
   LogIn,
-  Shield,
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
@@ -21,7 +20,9 @@ const Signin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [loginSuccess, setLoginSuccess] = useState(false);
-  //const [rememberMe, setRememberMe] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,12 +69,8 @@ const Signin = () => {
       if (result.success) {
         setLoginSuccess(true);
 
-        // ✅ store userId in localStorage for future use
-        localStorage.setItem("userId", data.userId || data._id);
-
-        // if (rememberMe) {
-        //   console.log("Would store email:", formData.email);
-        // }
+        // Store userId in state instead of localStorage
+        setUserId(data.userId || data._id);
 
         // redirect to homepage after 2s
         setTimeout(() => {
@@ -101,22 +98,14 @@ const Signin = () => {
   };
 
   // for redirecting to signup page
-  const navigate = useNavigate();
   const handleRedirectToSignup = () => {
-    navigate("/Signup"); // Signup is routed at "/"
+    navigate("/Signup");
   };
 
   // for redirecting to forgot password page
   const handleRedirectToForgotPassword = () => {
     navigate("/forgot-password");
   };
-
-  // const handleDemoLogin = () => {
-  //   setFormData({
-  //     email: "demo@eq-auction.com",
-  //     password: "demo123456",
-  //   });
-  // };
 
   if (loginSuccess) {
     return (
@@ -182,14 +171,11 @@ const Signin = () => {
       <div className="relative z-10 w-full max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
-            style={{ textShadow: '0 0 20px rgba(125, 211, 252, 0.3)' }}>
-            Quantum-Bid
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
             style={{ textShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }}
           >
-            EQ-Auction
+            Quantum-Bid
           </h1>
           <p
             className="text-slate-300/90 text-base sm:text-lg font-medium px-4 sm:px-0"
@@ -361,7 +347,6 @@ const Signin = () => {
           </div>
         </div>
 
-        {/* Footer */}
         {/* Footer */}
         <div className="text-center mt-8">
           <p

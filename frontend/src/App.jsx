@@ -14,7 +14,9 @@ import PaymentCallback from "./pages/PaymentCallback";
 import UpcomingAuctions from "./components/auction/UpcomingAuctions";
 import OngoingAuctions from "./components/auction/OngoingAuctions";
 import CompletedAuctions from "./components/auction/CompletedAuctions";
-
+import ViewLiveAuction from "./pages/Auctions/ViewLiveAuction"
+import UserProfile from "./pages/UserProfile"
+import MyAuctions from "./pages/MyAuctions"
 
 function App() {
   return (
@@ -27,7 +29,7 @@ function App() {
       <Route path="/home" element={<AuctionHomepage />} />
       <Route path="/live" element={<LiveAuction/>}/>
       <Route path="/about" element={<AboutUs/>}/>
-      <Route path="/faqs" element={<Faqs/>}/>
+      <Route path="/Faqs" element={<Faqs/>}/>
       <Route path="/view-auction" element={<ViewLiveAuction/>}/>
       <Route path="/profile" element={<UserProfile/>}/>
       <Route path="my-auctions" element={<MyAuctions/>}/>

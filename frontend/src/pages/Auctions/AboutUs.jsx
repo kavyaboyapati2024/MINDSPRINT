@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, Zap, Users, Award, ChevronRight, Atom, Eye, CheckCircle, Star, Sparkles, Rocket, Crown, Diamond } from 'lucide-react';
+import { Shield, Lock, Zap, Award, Atom, Eye, Diamond, Crown } from 'lucide-react';
+import Navbar from '../../components/Navbar';
 
 const AboutUs = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -71,6 +73,12 @@ const AboutUs = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 relative overflow-hidden">
+      {/* Navbar */}
+      <Navbar 
+        isMobileMenuOpen={isMobileMenuOpen} 
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
@@ -89,7 +97,7 @@ const AboutUs = () => {
         ></div>
       </div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 pt-32">
         {/* Header Section */}
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-12">
@@ -116,8 +124,6 @@ const AboutUs = () => {
               shadow-[0_0_0_1px_rgba(30,41,59,0.1),0_0_40px_rgba(0,0,0,0.8),0_0_80px_rgba(15,23,42,0.6)]">
               
               <div className="relative z-10 text-center">
-                
-                
                 <h2 className="text-2xl font-black text-sky-400 mb-6">
                   Revolutionizing Digital Auctions
                 </h2>
@@ -218,8 +224,6 @@ const AboutUs = () => {
                       </h3>
                       <p className="text-slate-300/90 leading-relaxed font-medium text-sm">{item.description}</p>
                     </div>
-                    
-                    
                   </div>
                 ))}
               </div>
@@ -232,8 +236,6 @@ const AboutUs = () => {
               shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_100px_rgba(15,23,42,0.6)]">
               
               <div className="relative z-10">
-                
-                
                 <h2 className="text-3xl font-black text-sky-400 mb-6">
                   Ready to Experience Quantum-Secured Auctions?
                 </h2>
@@ -249,7 +251,6 @@ const AboutUs = () => {
                     shadow-[0_0_40px_rgba(14,165,233,0.4),0_15px_30px_rgba(0,0,0,0.3)] 
                     hover:shadow-[0_0_60px_rgba(14,165,233,0.6),0_20px_40px_rgba(0,0,0,0.4)]">
                     <span className="flex items-center">
-                      
                       Start Bidding Today
                     </span>
                   </button>
