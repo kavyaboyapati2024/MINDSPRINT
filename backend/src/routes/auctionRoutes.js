@@ -4,12 +4,22 @@ import {
   getOngoingAuctions,
   getUpcomingAuctions,
   getPastAuctions,
-  getAuctionById,
-  getAuctionImage
+  getAuctionEndTime,
+  getAuctionStartingBid,
+  getAuctionFile,
+  isRegisteredForAuction,
+  getOngoingAuctionsById,
+   getAuctionById,
+  getAuctionImage,
+  resetDemo,
 } from "../controllers/auctionControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
+
+router.post('/reset',resetDemo )
+
+
 
 router.post("/create", upload.single("file"), createAuction);
 
@@ -19,8 +29,19 @@ router.get("/ongoing", getOngoingAuctions);
 
 router.get("/past", getPastAuctions);
 
+router.post("/get-end-time", getAuctionEndTime);
+
+router.post("/get-auction-starting-bid", getAuctionStartingBid);
+
+router.get("/auction-file/:auctionId", getAuctionFile);
+
+router.post("/check-registration-status", isRegisteredForAuction)
+
+router.post("/ongoing-by-id", getOngoingAuctionsById)
+
 router.get("/:id", getAuctionById);
 
 router.get("/:id/image", getAuctionImage);
+
 
 export default router;

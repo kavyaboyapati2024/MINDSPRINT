@@ -1,5 +1,8 @@
 import Auction from "../models/auctionModel.js";
-import Auctioner from "../models/auctionerModel.js";
+import Aucioner from "../models/auctionerModel.js"
+import AuctionRegistration from "../models/auctionRegistrationModel.js";
+import WinnerMail from "../models/winnerMailModel.js"
+import Bid from "../models/bidModel.js"
 
 //create an auction
 export const createAuction = async (req, res) => {
@@ -111,6 +114,7 @@ export const getUpcomingAuctions = async (req, res) => {
   }
 };
 
+
 // Get Ongoing Auctions
 export const getOngoingAuctions = async (req, res) => {
   try {
@@ -148,6 +152,136 @@ export const getPastAuctions = async (req, res) => {
   }
 };
 
+export const getAuctionEndTime = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("endDateTime");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      endDateTime: auction.endDateTime,
+    });
+  } catch (error) {
+    console.error("Error fetching auction end time:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+export const getAuctionStartingBid = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("basePrice");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      startingBid: auction.basePrice,
+    });
+  } catch (error) {
+    console.error("Error fetching auction starting bid:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getAuctionFile = async (req, res) => {
+  try {
+    const { auctionId } = req.params; // GET /auction-file/:auctionId
+
+    if (!auctionId) {
+      return res.status(400).json({ message: "auctionId is required" });
+    }
+
+    const auction = await Auction.findById(auctionId).select("file");
+
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      auctionId,
+      file: auction.file, // return the file path or URL
+    });
+  } catch (error) {
+    console.error("Error fetching auction file:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const isRegisteredForAuction = async (req, res) => {
+  try {
+    const { auctionId, userId } = req.body;
+
+    if (!auctionId || !userId) {
+      return res.status(400).json({ error: "auctionId and userId are required" });
+    }
+
+    // Check registration in AuctionRegistration collection
+    const registration = await AuctionRegistration.findOne({
+      auctionId,
+      userId,
+    }).lean();
+
+    const isRegistered = !!registration;
+
+    return res.status(200).json({ registered: isRegistered });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
+
+export const getOngoingAuctionsById = async (req, res) => {
+  try {
+    const { userId } = req.body; // Get userId from request body
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    // Fetch auctions and populate auctioner name
+    const auctions = await Auction.find({ status: "ongoing"}, "auctionerId title endDateTime")
+      .populate("auctionerId", "name");
+
+    // For each auction, check if user is registered
+    const formattedAuctions = await Promise.all(
+      auctions.map(async (auction) => {
+        const registration = await AuctionRegistration.findOne({
+          auctionId: auction._id,
+          userId,
+        });
+
+        return {
+          _id: auction._id,
+          title: auction.title,
+          endDateTime: auction.endDateTime,
+          auctionerName: auction.auctionerId.name,
+          isRegistered: !!registration, // true if registration exists, else false
+        };
+      })
+    );
+
+    res.status(200).json(formattedAuctions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 export const getAuctionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -181,4 +315,30 @@ export const getAuctionImage = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const resetDemo = async (req, res) => {
+  try {
+    const { userId, auctionId } = req.body;
+
+    // 1. Clear all WinnerMail docs
+    await WinnerMail.deleteMany({});
+
+    // 2. If userId & auctionId provided → delete related bids
+    if (userId && auctionId) {
+      await Bid.deleteMany({ userId, auctionId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `WinnerMail cleared${
+        userId && auctionId ? " and related bids deleted" : ""
+      }.`,
+    });
+  } catch (error) {
+    console.error("Error clearing WinnerMail:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+
 
