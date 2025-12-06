@@ -2,7 +2,10 @@
 import Auction from "../models/auctionModel.js"
 import Bid from "../models/bidModel.js";
 import AuctionerKey from "../models/auctionerKeyModel.js";
-
+import User from "../models/userModel.js"
+import WinnerMail from "../models/winnerMailModel.js";
+import { sendMail } from "../services/sendMail.js";
+import { generateAuctionWinnerEmail } from "../services/auctionWinnerEmailTemplate.js";
 import { DecryptBid } from "../services/encryption.js";
 // TO store thr encrypted amount in the mongo db
 export const placeBid = async (req, res) => {
@@ -120,6 +123,30 @@ export const getBidderKey = async (req, res) => {
   }
 };
 
+export const decryptBid = async (req, res) => {
+  try {
+    const { key, encryptedText } = req.body;
+
+    if (!key || !encryptedText) {
+      return res.status(400).json({
+        error: "key and encryptedText are required in request body",
+      });
+    }
+
+    const decryptedAmount = DecryptBid(key, encryptedText);
+
+    return res.status(200).json({
+      success: true,
+      decryptedAmount,
+    });
+  } catch (error) {
+    console.error("Decryption error:", error.message);
+    return res.status(500).json({
+      error: "Failed to decrypt bid",
+    });
+  }
+};
+
 export const getbidderid = async(req, res) => {
   try {
     // req.user is populated by protectRoute middleware
@@ -127,5 +154,120 @@ export const getbidderid = async(req, res) => {
   } catch (err) {
     console.error("Error getting bidder ID:", err.message);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const hasPlacedBid = async (req, res) => {
+  try {
+    const { auctionId, userId } = req.body;
+
+    if (!auctionId || !userId) {
+      return res.status(400).json({ error: "auctionId and userId are required" });
+    }
+
+    // Check if bid exists
+    const bid = await Bid.findOne({ auctionId, userId }).lean();
+    const hasBid = !!bid;
+
+    return res.status(200).json({ placedBid: hasBid });
+  } catch (err) {
+    console.error("Error checking bid:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
+export const sendWinningMail = async (req, res) => {
+  try {
+    const { auctionId, userId, amount } = req.body;
+
+    if (!auctionId || !userId || !amount) {
+      return res.status(400).json({ message: "auctionId, userId and amount are required" });
+    }
+
+    // Check if already sent
+    const existing = await WinnerMail.findOne({ auctionId, userId });
+    if (existing) {
+      return res.status(400).json({ message: "Winner email already sent to this user for this auction" });
+    }
+
+    // Get Auction details
+    const auction = await Auction.findById(auctionId).select("title endDateTime");
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    // Get User details
+    const user = await User.findById(userId).select("userName email");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate email HTML
+    const htmlContent = generateAuctionWinnerEmail({
+      userName: user.userName,
+      auctionTitle: auction.title,
+      bidAmount: amount,
+      auctionEndDate: auction.endDateTime,
+    });
+
+    // Send email
+    await sendMail(
+      user.email,
+      htmlContent,
+      `🏆 You won the auction: ${auction.title}`
+    );
+
+    // Save record to prevent duplicate sends
+    await WinnerMail.create({ auctionId, userId });
+
+    res.status(200).json({ message: "Winner email sent successfully" });
+  } catch (error) {
+    console.error("Error sending winning email:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const advanceMinute = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+
+    if (!auctionId) {
+      return res.status(400).json({ success: false, message: "auctionId is required" });
+    }
+
+    // Current UTC time
+    const now = new Date();
+
+    // Convert UTC → IST
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset in ms (+5:30)
+    const istTime = new Date(now.getTime() + istOffset);
+
+    // Add +1 minute in IST
+    const updatedIST = new Date(istTime.getTime() + 2 * 60 * 1000);
+
+    // ✅ Set milliseconds = 0
+    updatedIST.setMilliseconds(0);
+
+    // Convert back IST → UTC (to save in DB)
+    const updatedUTC = new Date(updatedIST.getTime() - istOffset);
+
+    // Update auction endDateTime
+    const auction = await Auction.findByIdAndUpdate(
+      auctionId,
+      { endDateTime: updatedUTC },
+      { new: true }
+    );
+
+    if (!auction) {
+      return res.status(404).json({ success: false, message: "Auction not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Auction endDateTime updated by +1 minute",
+      endDateTimeUTC: auction.endDateTime,
+    });
+  } catch (error) {
+    console.error("Error updating endDateTime:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
