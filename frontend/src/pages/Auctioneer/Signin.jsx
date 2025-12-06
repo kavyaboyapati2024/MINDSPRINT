@@ -7,11 +7,13 @@ import {
   LogIn,
   CheckCircle,
   AlertCircle,
+  Gavel,
+  Building2,
 } from "lucide-react";
-import AuthService from "../services/authServices"; // adjust the path if needed
+import AuthService from "../../services/authServices"; // adjust the path if needed
 import { useNavigate } from "react-router-dom";
 
-const Signin = () => {
+const AuctioneerSignin = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,7 +22,7 @@ const Signin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [userId, setUserId] = useState(null);
+  const [auctioneerId, setAuctioneerId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -63,22 +65,26 @@ const Signin = () => {
 
     setIsLoading(true);
     try {
-      const result = await AuthService.login(formData.email, formData.password);
+      // Call auctioneer-specific login endpoint
+      const result = await AuthService.auctioneerLogin(
+        formData.email,
+        formData.password,
+      );
       const data = result || {};
 
       if (result.success) {
         setLoginSuccess(true);
 
-        // Store userId in state instead of localStorage
-        setUserId(data.userId || data._id);
+        // Store auctioneerId in state
+        setAuctioneerId(data.auctioneerId || data._id);
 
-        // redirect to homepage after 2s
+        // redirect to auctioneer dashboard after 2s
         setTimeout(() => {
-          navigate("/home");
+          navigate("/auctioneer/dashboard");
         }, 2000);
       } else {
-        if (data.message === "User not found") {
-          setErrors({ email: "No account found with this email" });
+        if (data.message === "Auctioneer not found") {
+          setErrors({ email: "No auctioneer account found with this email" });
         } else if (data.message === "Invalid password") {
           setErrors({ password: "Incorrect password" });
         } else {
@@ -99,12 +105,12 @@ const Signin = () => {
 
   // for redirecting to signup page
   const handleRedirectToSignup = () => {
-    navigate("/signup/user");
+    navigate("/signup/auctioneer");
   };
 
   // for redirecting to forgot password page
   const handleRedirectToForgotPassword = () => {
-    navigate("/forgot-password/user");
+    navigate("/forgot-password/auctioneer");
   };
 
   if (loginSuccess) {
@@ -133,7 +139,7 @@ const Signin = () => {
               className="text-3xl font-bold text-white mb-4"
               style={{ textShadow: "0 0 15px rgba(255, 255, 255, 0.2)" }}
             >
-              Welcome Back! 🎉
+              Welcome Back, Auctioneer! 🎉
             </h2>
 
             <p className="text-slate-300/90 text-lg leading-relaxed mb-6">
@@ -171,17 +177,20 @@ const Signin = () => {
       <div className="relative z-10 w-full max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent mb-2"
-            style={{ textShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }}
-          >
-            Quantum-Bid
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            
+            <h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-200 via-sky-200 to-white bg-clip-text text-transparent"
+              style={{ textShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }}
+            >
+              Quantum-Bid
+            </h1>
+          </div>
           <p
             className="text-slate-300/90 text-base sm:text-lg font-medium px-4 sm:px-0"
             style={{ textShadow: "0 0 10px rgba(148, 163, 184, 0.2)" }}
           >
-            Welcome Back to the Action
+            Auctioneer Portal - Manage Your Auctions
           </p>
         </div>
 
@@ -206,10 +215,10 @@ const Signin = () => {
                 className="text-2xl sm:text-3xl font-bold text-white mb-2"
                 style={{ textShadow: "0 0 15px rgba(255, 255, 255, 0.2)" }}
               >
-                Sign In
+                Auctioneer Sign In
               </h2>
               <p className="text-slate-400/80 text-sm sm:text-base">
-                Enter your credentials to access your account
+                Access your auctioneer dashboard
               </p>
             </div>
 
@@ -241,7 +250,7 @@ const Signin = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="your.email@example.com"
+                    placeholder="auctioneer@example.com"
                     className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-slate-800/70 border rounded-lg sm:rounded-xl text-white placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-sky-400/60 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base 
                       shadow-[inset_0_3px_6px_rgba(0,0,0,0.4),0_2px_4px_rgba(14,165,233,0.1),0_0_10px_rgba(0,0,0,0.2)] 
                       hover:shadow-[inset_0_3px_6px_rgba(0,0,0,0.4),0_4px_8px_rgba(14,165,233,0.15),0_0_15px_rgba(0,0,0,0.3)] 
@@ -308,8 +317,8 @@ const Signin = () => {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
+              {/* Forgot Password */}
+              <div className="flex items-center justify-end">
                 <button
                   type="button"
                   onClick={handleRedirectToForgotPassword}
@@ -339,7 +348,7 @@ const Signin = () => {
                 ) : (
                   <div className="flex items-center justify-center">
                     <LogIn className="w-5 h-5 mr-2" />
-                    Sign In
+                    Sign In as Auctioneer
                   </div>
                 )}
               </button>
@@ -353,12 +362,12 @@ const Signin = () => {
             className="text-slate-400/80 text-sm"
             style={{ textShadow: "0 0 10px rgba(148, 163, 184, 0.2)" }}
           >
-            Don't have an account?{" "}
+            Don't have an auctioneer account?{" "}
             <button
               onClick={handleRedirectToSignup}
               className="text-sky-400 hover:text-sky-300 cursor-pointer font-medium transition-colors duration-200 underline-offset-4 hover:underline bg-transparent border-none p-0"
             >
-              Sign Up
+              Register Now
             </button>
           </p>
         </div>
@@ -367,4 +376,4 @@ const Signin = () => {
   );
 };
 
-export default Signin;
+export default AuctioneerSignin;

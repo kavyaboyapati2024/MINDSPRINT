@@ -1,21 +1,31 @@
 import React, { useState } from 'react';
-import EmailStep from '../components/Emailstep';
-import OTPStep from '../components/OTPStep';
-import RegistrationStep from '../components/RegistrationStep';
-import SuccessStep from '../components/SuccessStep';
-import StepIndicator from '../components/StepIndicator';
-import BackgroundEffects from '../components/BackgroundEffects';
-import AuthService from '../services/authServices';
+import EmailStep from '../../components/Emailstep';
+import OTPStep from '../../components/OTPStep';
+import AuctioneerRegistrationStep from '../../components/AuctioneerRegistrationStep';
+import SuccessStep from '../../components/SuccessStep';
+import StepIndicator from '../../components/StepIndicator';
+import BackgroundEffects from '../../components/BackgroundEffects';
+import AuthService from '../../services/authServices';
 import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
-    const navigate = useNavigate();
+const AuctioneerSignup = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    userName: '',
+    accountType: 'personal',
+    // Personal account fields
+    fullName: '',
+    phoneNumber: '',
     password: '',
+    gst: '',
+    address: '',
+    // Organization fields
+    organizationName: '',
+    contactPersonName: '',
+    contactPersonPhone: '',
+    govtId: '',
     otp: '',
     verifyToken: ''
   });
@@ -127,16 +137,48 @@ const Signup = () => {
   const handleRegister = async () => {
     const newErrors = {};
     
-    if (!formData.userName) {
-      newErrors.userName = 'Username is required';
-    } else if (formData.userName.length < 3) {
-      newErrors.userName = 'Username must be at least 3 characters';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    if (formData.accountType === 'personal') {
+      // Personal account validation
+      if (!formData.fullName) {
+        newErrors.fullName = 'Full name is required';
+      }
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = 'Phone number is required';
+      } else if (!/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
+        newErrors.phoneNumber = 'Please enter a valid 10-digit phone number';
+      }
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
+      if (!formData.address) {
+        newErrors.address = 'Address is required';
+      }
+    } else {
+      // Organization validation
+      if (!formData.organizationName) {
+        newErrors.organizationName = 'Organization name is required';
+      }
+      if (!formData.contactPersonName) {
+        newErrors.contactPersonName = 'Contact person name is required';
+      }
+      if (!formData.contactPersonPhone) {
+        newErrors.contactPersonPhone = 'Contact person phone is required';
+      } else if (!/^\d{10}$/.test(formData.contactPersonPhone.replace(/\D/g, ''))) {
+        newErrors.contactPersonPhone = 'Please enter a valid 10-digit phone number';
+      }
+      if (!formData.govtId) {
+        newErrors.govtId = 'Government ID/Company registration number is required';
+      }
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
+      if (!formData.address) {
+        newErrors.address = 'Address is required';
+      }
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -148,33 +190,47 @@ const Signup = () => {
     setErrors({});
 
     try {
-      const response = await AuthService.completeRegistration(
-        formData.email,
-        formData.userName,
-        formData.password,
-        formData.verifyToken
-      );
+      const registrationData = {
+        email: formData.email,
+        accountType: formData.accountType,
+        password: formData.password,
+        gst: formData.gst,
+        address: formData.address,
+        verifyToken: formData.verifyToken,
+        ...(formData.accountType === 'personal' ? {
+          fullName: formData.fullName,
+          phoneNumber: formData.phoneNumber,
+        } : {
+          organizationName: formData.organizationName,
+          contactPersonName: formData.contactPersonName,
+          contactPersonPhone: formData.contactPersonPhone,
+          govtId: formData.govtId,
+        })
+      };
+
+      const response = await AuthService.completeAuctioneerRegistration(registrationData);
       
       if (response.success) {
-        // Save user data for profile page
-        const userData = {
-          userName: formData.userName,
+        // Save auctioneer data for profile page
+        const auctioneerData = {
           email: formData.email,
+          accountType: formData.accountType,
+          name: formData.accountType === 'personal' ? formData.fullName : formData.organizationName,
           joinDate: new Date().toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'long' 
           })
         };
-        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('auctioneerData', JSON.stringify(auctioneerData));
         
         setCurrentStep(4);
       } else {
         setErrors({ 
-          userName: response.message || 'Registration failed. Please try again.' 
+          general: response.message || 'Registration failed. Please try again.' 
         });
       }
     } catch (error) {
-      setErrors({ userName: 'Network error. Please try again.' });
+      setErrors({ general: 'Network error. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -216,22 +272,14 @@ const Signup = () => {
   };
 
   // Success action
-  const handleStartBidding = () => {
-    // Navigate to dashboard or main app
-    navigate('/signin/user');
-    // window.location.href = '/dashboard';
+  const handleStartAuction = () => {
+    navigate('/auctioneer/dashboard');
   };
 
-  // navigation button function to signin page 
+  // Navigation button function to signin page 
   const handleRedirectToSignin = () => {
-    navigate('/signin/user'); // Correct lowercase
+    navigate('/signin/auctioneer');
   };
-
-  // navigate to signin page function
-    const handleRedirectToSignup = () => {
-      navigate('/Signup/user'); // Signup is routed at "/"
-    };
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -246,7 +294,7 @@ const Signup = () => {
           </h1>
           <p className="text-slate-300/90 text-base sm:text-lg font-medium px-4 sm:px-0"
              style={{textShadow: '0 0 10px rgba(148, 163, 184, 0.2)'}}>
-            Join the Ultimate Bidding Experience
+            Auctioneer Registration Portal
           </p>
         </div>
 
@@ -292,9 +340,9 @@ const Signup = () => {
               />
             )}
 
-            {/* Step 3: Complete Registration */}
+            {/* Step 3: Auctioneer Registration */}
             {currentStep === 3 && (
-              <RegistrationStep
+              <AuctioneerRegistrationStep
                 formData={formData}
                 errors={errors}
                 isLoading={isLoading}
@@ -308,8 +356,12 @@ const Signup = () => {
 
             {/* Step 4: Success */}
             {currentStep === 4 && (
-              <SuccessStep onStartBidding={handleStartBidding} />
-
+              <SuccessStep 
+                onStartBidding={handleStartAuction}
+                title="Registration Successful!"
+                message="Your auctioneer account has been created successfully"
+                buttonText="Go to Dashboard"
+              />
             )}
           </div>
         </div>
@@ -332,4 +384,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default AuctioneerSignup;

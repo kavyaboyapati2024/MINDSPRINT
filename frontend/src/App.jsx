@@ -17,15 +17,18 @@ import CompletedAuctions from "./components/auction/CompletedAuctions";
 import ViewLiveAuction from "./pages/Auctions/ViewLiveAuction"
 import UserProfile from "./pages/UserProfile"
 import MyAuctions from "./pages/MyAuctions"
+import AuctioneerSignin from "./pages/Auctioneer/Signin";
+import AuctioneerSignup from "./pages/Auctioneer/Signup";
+import AuctioneerForgotPassword from "./pages/Auctioneer/AuctioneerForgotPassword";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing/>} />  {/* 👈 now landing page is root */}
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/signin" element={<Signin />} />
+      <Route path="/signup/user" element={<Signup />} />
+      <Route path="/signin/user" element={<Signin />} />
       <Route path="/update-password" element={<UpdatePassword />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/forgot-password/user" element={<ForgotPassword />} />
       <Route path="/home" element={<AuctionHomepage />} />
       <Route path="/live" element={<LiveAuction/>}/>
       <Route path="/about" element={<AboutUs/>}/>
@@ -37,6 +40,9 @@ function App() {
       <Route path="/upcoming-auctions" element={<UpcomingAuctions userId={localStorage.getItem("userId")} />} />
       <Route path="/ongoing-auctions" element={<OngoingAuctions/>} />
       <Route path="/past-auctions" element={<CompletedAuctions/>} />
+      <Route path="/signin/auctioneer" element={<AuctioneerSignin/>}/>
+      <Route path="signup/auctioneer" element={<AuctioneerSignup/>}/>
+      <Route path="forgot-password/auctioneer" element={<AuctioneerForgotPassword/>}/>
     </Routes>
   );
 }
