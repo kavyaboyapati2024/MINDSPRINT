@@ -184,7 +184,7 @@ const ForgotPassword = () => {
     };
 
     const handleGoBack = () => {
-        navigate('/signin');
+        navigate('/signin/user');
     };
 
     const formatTime = (seconds) => {
