@@ -12,6 +12,8 @@ const AuctioneerDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingAuction, setEditingAuction] = useState(null);
   const [apiError, setApiError] = useState(null);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [auctioneerName, setAuctioneerName] = useState('');
 
   // Dummy data with proper image URLs
   const dummyAuctions = [
@@ -131,6 +133,7 @@ const AuctioneerDashboard = () => {
 
   useEffect(() => {
     fetchAuctions();
+    loadAuctioneerName();
   }, []);
 
   useEffect(() => {
@@ -215,6 +218,40 @@ const AuctioneerDashboard = () => {
     }
   };
 
+  const loadAuctioneerName = () => {
+    try {
+      // Try sessionStorage first
+      const auctioneerDataJson = sessionStorage.getItem('auctioneerData');
+      if (auctioneerDataJson) {
+        const auctioneerData = JSON.parse(auctioneerDataJson);
+        if (auctioneerData) {
+          // Try different possible field names for name
+          const name = auctioneerData.name || auctioneerData.username || auctioneerData.fullName || auctioneerData.email || 'Auctioneer';
+          setAuctioneerName(name);
+          return;
+        }
+      }
+
+      // Try localStorage
+      const userName = localStorage.getItem('userName') || localStorage.getItem('auctioneerName') || localStorage.getItem('user');
+      if (userName) {
+        try {
+          // Check if it's JSON
+          const parsed = JSON.parse(userName);
+          setAuctioneerName(parsed.name || parsed.username || parsed.email || 'Auctioneer');
+        } catch {
+          // It's a plain string
+          setAuctioneerName(userName);
+        }
+      } else {
+        setAuctioneerName('Auctioneer');
+      }
+    } catch (err) {
+      console.warn('Could not load auctioneer name', err);
+      setAuctioneerName('Auctioneer');
+    }
+  };
+
   const handleDeleteAuction = async (auctionId) => {
     if (!window.confirm('Are you sure you want to delete this auction?')) return;
     const updatedAuctions = auctions.filter(a => a._id !== auctionId);
@@ -244,7 +281,18 @@ const AuctioneerDashboard = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/auctioneer-profile");
+    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  };
+
+  const handleLogout = () => {
+    // Clear any stored authentication data
+    sessionStorage.removeItem('auctioneerData');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('auctioneerId');
+    localStorage.removeItem('auctioneer_id');
+    // Navigate to signin page
+    navigate("/signin/auctioneer");
   };
 
   const getStatusBadge = (status) => {
@@ -272,7 +320,15 @@ const AuctioneerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
+    <div 
+      className="min-h-screen bg-slate-900 relative overflow-hidden"
+      onClick={(e) => {
+        // Close dropdown when clicking outside
+        if (isProfileDropdownOpen && !e.target.closest('.profile-dropdown-container')) {
+          setIsProfileDropdownOpen(false);
+        }
+      }}
+    >
       {/* Subtle Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-sky-500/8 rounded-full blur-3xl"></div>
@@ -289,14 +345,58 @@ const AuctioneerDashboard = () => {
             <p className="text-slate-400 text-sm">Manage Auctions</p>
           </div>
           
-          {/* Profile Icon */}
-          <button
-            onClick={handleProfileClick}
-            className="p-3 bg-slate-700/60 backdrop-blur-sm border border-slate-700/50 rounded-lg hover:bg-slate-700 hover:border-sky-500/50 transition-all group"
-            title="View Profile"
-          >
-            <User size={24} className="text-slate-400 group-hover:text-sky-400 transition-colors" />
-          </button>
+          {/* Profile Icon with Dropdown */}
+          <div className="relative profile-dropdown-container">
+            <button
+              onClick={handleProfileClick}
+              className="p-3 bg-slate-700/60 backdrop-blur-sm border border-slate-700/50 rounded-lg hover:bg-slate-700 hover:border-sky-500/50 transition-all group"
+              title="Profile Menu"
+            >
+              <User size={24} className="text-slate-400 group-hover:text-sky-400 transition-colors" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isProfileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden z-50">
+                {/* User Name Header */}
+                <div className="px-4 py-3 border-b border-slate-700/50 bg-slate-700/30">
+                  <p className="text-xs text-slate-400 mb-1">Signed in as</p>
+                  <p className="text-sm font-semibold text-white truncate">{auctioneerName}</p>
+                </div>
+                
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      navigate("/auctioneer-profile");
+                      setIsProfileDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-slate-300 hover:bg-slate-700/50 hover:text-sky-400 transition-all flex items-center gap-3"
+                  >
+                    <User size={18} />
+                    <span className="font-medium">View Profile</span>
+                  </button>
+                  <div className="border-t border-slate-700/50 my-1"></div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsProfileDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-slate-300 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center gap-3"
+                  >
+                    <svg 
+                      className="w-[18px] h-[18px]" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span className="font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
