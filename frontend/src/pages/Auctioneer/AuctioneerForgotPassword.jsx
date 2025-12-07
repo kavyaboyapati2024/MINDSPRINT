@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Shield, CheckCircle, AlertCircle, Key, ArrowLeft, Send, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AuthService from '../../services/authServices';
 
 const AuctioneerForgotPassword = () => {
   const navigate = useNavigate();
@@ -74,27 +75,17 @@ const AuctioneerForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase()
-        }),
-      });
+      const response = await AuthService.forgotAuctioneerSendOTP(formData.email.toLowerCase());
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         setCurrentStep(2);
         setTimer(300); // 5 minutes
         setCanResendOtp(false);
       } else {
-        if (data.message === 'No account found with this email.') {
+        if (response.message === 'No account found with this email.' || response.message === 'No account found with this email') {
           setErrors({ email: 'No account found with this email' });
         } else {
-          setErrors({ general: data.message || 'Failed to send OTP. Please try again.' });
+          setErrors({ general: response.message || 'Failed to send OTP. Please try again.' });
         }
       }
     } catch (error) {
@@ -121,25 +112,14 @@ const AuctioneerForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase(),
-          otp: formData.otp
-        }),
-      });
+      const response = await AuthService.forgotAuctioneerVerifyOTP(formData.email.toLowerCase(), formData.otp);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setResetToken(data.resetToken);
+      if (response.success) {
+        setResetToken(response.resetToken || '');
         setCurrentStep(3);
         setTimer(300); // 5 minutes for password reset
       } else {
-        setErrors({ general: data.message || 'Invalid or expired OTP. Please try again.' });
+        setErrors({ general: response.message || 'Invalid or expired OTP. Please try again.' });
       }
     } catch (error) {
       console.error('Verify OTP error:', error);
@@ -176,24 +156,16 @@ const AuctioneerForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase(),
-          resetToken: resetToken,
-          newPassword: formData.newPassword
-        }),
-      });
+      const response = await AuthService.resetAuctioneerPassword(
+        formData.email.toLowerCase(),
+        formData.newPassword,
+        resetToken
+      );
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         setResetSuccess(true);
       } else {
-        setErrors({ general: data.message || 'Failed to reset password. Please try again.' });
+        setErrors({ general: response.message || 'Failed to reset password. Please try again.' });
       }
     } catch (error) {
       console.error('Reset password error:', error);
