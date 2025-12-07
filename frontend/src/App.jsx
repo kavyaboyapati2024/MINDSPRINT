@@ -23,6 +23,7 @@ import AuctioneerForgotPassword from "./pages/Auctioneer/AuctioneerForgotPasswor
 import AuctioneerDashboard from "./pages/Auctioneer/AuctioneerDashboard";
 import CreateAuction from "./pages/Auctioneer/CreateAuction";
 import AuctioneerProfile from "./pages/Auctioneer/AuctionerProfile";
+import AuctioneerLivePage from "./pages/Auctioneer/LiveAuctionPanel";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
       <Route path="/auctioneer-dashboard" element={<AuctioneerDashboard/>}/>
       <Route path="/create-auction" element={<CreateAuction/>}/>
       <Route path="/auctioneer-profile" element={<AuctioneerProfile/>}/>
+      <Route path="/live-panel" element={<AuctioneerLivePage/>}/>
     </Routes>
   );
 }

@@ -80,7 +80,7 @@ const AuctioneerSignin = () => {
 
         // redirect to auctioneer dashboard after 2s
         setTimeout(() => {
-          navigate("/auctioneer/dashboard");
+          navigate("/auctioneer-dashboard");
         }, 2000);
       } else {
         if (data.message === "Auctioneer not found") {
