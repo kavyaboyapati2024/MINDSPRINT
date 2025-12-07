@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { User, Calendar, Download } from "lucide-react";
 import axios from "axios";
+import AuctionReportModal from "./AuctionReportModal";
 
 const CompletedAuctions = () => {
   const [completedAuctions, setCompletedAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedAuctionId, setSelectedAuctionId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCompletedAuctions = async () => {
       try {
-        const response = await axios.get("http://localhost:9000/api/auctions/past");
+        const response = await axios.get(
+          "http://localhost:9000/api/auctions/past"
+        );
         setCompletedAuctions(response.data.past);
       } catch (err) {
         setError("Failed to load completed auctions.");
@@ -48,8 +53,10 @@ const CompletedAuctions = () => {
   return (
     <div className="bg-slate-800/60 backdrop-blur-lg border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 
-        grid grid-cols-6 gap-3 font-semibold text-white text-sm md:text-base">
+      <div
+        className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 
+        grid grid-cols-6 gap-3 font-semibold text-white text-sm md:text-base"
+      >
         <div className="col-span-2">Auction Title</div>
         <div>Auctioneer</div>
         <div>Completion Date</div>
@@ -92,9 +99,10 @@ const CompletedAuctions = () => {
               {/* Action */}
               <div>
                 <ActionButton
-                  onClick={() =>
-                    console.log(`Download report for ${auction.title}`)
-                  }
+                  onClick={() => {
+                    setSelectedAuctionId(auction._id); // or whatever the ID field is
+                    setIsModalOpen(true);
+                  }}
                 />
               </div>
             </div>
@@ -105,6 +113,11 @@ const CompletedAuctions = () => {
           No completed auctions found.
         </p>
       )}
+      <AuctionReportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        auctionId={selectedAuctionId}
+      />
     </div>
   );
 };
