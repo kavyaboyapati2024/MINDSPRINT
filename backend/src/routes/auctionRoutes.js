@@ -12,6 +12,8 @@ import {
    getAuctionById,
   getAuctionImage,
   resetDemo,
+  updateAuction,
+  deleteAuction
 } from "../controllers/auctionControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
@@ -19,7 +21,9 @@ const router = express.Router();
 
 router.post('/reset',resetDemo )
 
+router.put("/auction/:auctionId", upload.single("file"), updateAuction);
 
+router.delete("/auction/:auctionId", deleteAuction);
 
 router.post("/create", upload.single("file"), createAuction);
 

@@ -67,6 +67,81 @@ export const createAuction = async (req, res) => {
   }
 };
 
+// Update an auction
+export const updateAuction = async (req, res) => {
+  try {
+    const { auctionId } = req.params;
+    const {
+      title,
+      description,
+      basePrice,
+      startDateTime,
+      endDateTime,
+    } = req.body;
+
+    const auction = await Auction.findById(auctionId);
+
+    if (!auction) {
+      return res.status(404).json({ error: "Auction not found" });
+    }
+
+    if (title) auction.title = title;
+    if (description) auction.description = description;
+    if (basePrice) auction.basePrice = basePrice;
+
+    if (startDateTime) {
+      const start = new Date(startDateTime);
+      if (isNaN(start.getTime())) {
+        return res.status(400).json({ error: "Invalid start date format" });
+      }
+      auction.startDateTime = start;
+    }
+
+    if (endDateTime) {
+      const end = new Date(endDateTime);
+      if (isNaN(end.getTime())) {
+        return res.status(400).json({ error: "Invalid end date format" });
+      }
+      auction.endDateTime = end;
+    }
+
+    if (req.file) {
+      const fileBase64 = req.file.buffer.toString("base64");
+      auction.file = fileBase64;
+    }
+
+    await auction.save();
+
+    return res.status(200).json({
+      message: "Auction updated successfully",
+      auction,
+    });
+  } catch (error) {
+    console.error("Error updating auction:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Delete an auction
+export const deleteAuction = async (req, res) => {
+  try {
+    const { auctionId } = req.params;
+
+    const auction = await Auction.findByIdAndDelete(auctionId);
+
+    if (!auction) {
+      return res.status(404).json({ error: "Auction not found" });
+    }
+
+    return res.status(200).json({
+      message: "Auction deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting auction:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 // Get Upcoming Auctions
 export const getUpcomingAuctions = async (req, res) => {
   try {
@@ -113,7 +188,6 @@ export const getUpcomingAuctions = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // Get Ongoing Auctions
 export const getOngoingAuctions = async (req, res) => {
