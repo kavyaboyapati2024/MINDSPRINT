@@ -85,7 +85,7 @@ const AuctioneerSignup = () => {
     setErrors({});
 
     try {
-      const response = await AuthService.sendOTP(formData.email);
+      const response = await AuthService.sendAuctioneerOTP(formData.email);
       
       if (response.success) {
         setCurrentStep(2);
@@ -115,13 +115,13 @@ const AuctioneerSignup = () => {
     setErrors({});
 
     try {
-      const response = await AuthService.verifyOTP(formData.email, formData.otp);
+      const response = await AuthService.verifyAuctioneerOTP(formData.email, formData.otp);
       
       if (response.success) {
         setCurrentStep(3);
         setFormData(prev => ({ 
           ...prev, 
-          verifyToken: response.verifyToken || 'token-received' 
+          verifyToken: response.verifyToken 
         }));
       } else {
         setErrors({ otp: response.message || 'Invalid or expired OTP' });
@@ -243,7 +243,7 @@ const AuctioneerSignup = () => {
     setErrors({});
 
     try {
-      const response = await AuthService.sendOTP(formData.email);
+      const response = await AuthService.sendAuctioneerOTP(formData.email);
       
       if (!response.success) {
         setErrors({ otp: response.message || 'Failed to resend OTP' });
