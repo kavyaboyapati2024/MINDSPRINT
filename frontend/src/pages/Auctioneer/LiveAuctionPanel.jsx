@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gavel, Users, Play, Pause, StopCircle, Eye, EyeOff, Trophy, Clock, AlertCircle, Shield, Lock, TrendingUp, Activity } from 'lucide-react';
+import { Gavel, Users, Eye, EyeOff, Trophy, Clock, AlertCircle, Shield, Lock, TrendingUp, Activity } from 'lucide-react';
 
 const AuctioneerLivePage = () => {
   const [auctionStatus, setAuctionStatus] = useState('active'); // active, paused, ended
@@ -51,17 +51,10 @@ const AuctioneerLivePage = () => {
 
   const formatTime = (num) => num.toString().padStart(2, '0');
 
-  const handlePauseResume = () => {
-    setAuctionStatus(prev => prev === 'active' ? 'paused' : 'active');
-  };
-
-  const handleEndAuction = () => {
-    setAuctionStatus('ended');
-    setRevealBids(true);
-  };
-
   const handleRevealBids = () => {
-    setRevealBids(!revealBids);
+    if (auctionStatus === 'ended') {
+      setRevealBids(!revealBids);
+    }
   };
 
   const handleSelectWinner = (bidderId) => {
@@ -117,36 +110,16 @@ const AuctioneerLivePage = () => {
               </div>
               <div className="text-sky-400 text-sm font-medium mb-4">H : M : S</div>
               
-              <div className="flex space-x-2">
-                <button
-                  onClick={handlePauseResume}
-                  disabled={auctionStatus === 'ended'}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                    auctionStatus === 'ended'
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      : auctionStatus === 'active'
-                      ? 'bg-yellow-500 hover:bg-yellow-400 text-white'
-                      : 'bg-green-500 hover:bg-green-400 text-white'
-                  }`}
-                >
-                  {auctionStatus === 'active' ? (
-                    <><Pause className="w-4 h-4 inline mr-1" />Pause</>
-                  ) : (
-                    <><Play className="w-4 h-4 inline mr-1" />Resume</>
-                  )}
-                </button>
-                <button
-                  onClick={handleEndAuction}
-                  disabled={auctionStatus === 'ended'}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                    auctionStatus === 'ended'
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      : 'bg-red-500 hover:bg-red-400 text-white'
-                  }`}
-                >
-                  <StopCircle className="w-4 h-4 inline mr-1" />
-                  End
-                </button>
+              <div className="bg-slate-800/30 rounded-lg p-3 border border-slate-600/30">
+                <div className="flex items-center justify-center space-x-2">
+                  <Clock className="w-4 h-4 text-sky-400" />
+                  <span className="text-sky-400 text-sm font-medium">
+                    Timer runs automatically
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 text-center mt-2">
+                  Sealed bid auction cannot be paused or ended early
+                </p>
               </div>
             </div>
           </div>
@@ -238,16 +211,18 @@ const AuctioneerLivePage = () => {
                   Sealed Bids Control
                 </h3>
                 <p className="text-slate-400 text-sm">
-                  {revealBids 
-                    ? 'All bid amounts are now visible to you' 
-                    : 'Bids are currently encrypted and sealed'}
+                  {auctionStatus === 'ended' 
+                    ? revealBids 
+                      ? 'All bid amounts are now visible to you' 
+                      : 'Auction ended - You can now reveal the sealed bids'
+                    : 'Bids are encrypted and sealed until auction ends'}
                 </p>
               </div>
               <button
                 onClick={handleRevealBids}
-                disabled={auctionStatus !== 'ended' && activeBidders.length === 0}
+                disabled={auctionStatus !== 'ended'}
                 className={`py-3 px-6 rounded-xl font-bold transition-all ${
-                  auctionStatus !== 'ended' && activeBidders.length === 0
+                  auctionStatus !== 'ended'
                     ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
                     : revealBids
                     ? 'bg-sky-500 hover:bg-sky-400 text-white'
