@@ -11,6 +11,7 @@ const AuctioneerDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingAuction, setEditingAuction] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
   // Dummy data with proper image URLs
   const dummyAuctions = [
@@ -76,6 +77,50 @@ const AuctioneerDashboard = () => {
     }
   ];
 
+  // Small helper component to show a skeleton while image loads and a fallback on error
+  const RemoteImage = ({ src, alt, className }) => {
+    const [loaded, setLoaded] = useState(false);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+      setLoaded(false);
+      setError(false);
+      if (!src) {
+        setError(true);
+        return;
+      }
+      const img = new Image();
+      img.src = src;
+      img.onload = () => setLoaded(true);
+      img.onerror = () => setError(true);
+      return () => {
+        img.onload = null;
+        img.onerror = null;
+      };
+    }, [src]);
+
+    if (error) {
+      return (
+        <img
+          src={'https://via.placeholder.com/400x300/1e293b/64748b?text=No+Image'}
+          alt={alt}
+          className={className}
+        />
+      );
+    }
+
+    return (
+      <>
+        {!loaded && (
+          <div className={`${className} bg-slate-700/40 animate-pulse`} />
+        )}
+        {loaded && (
+          <img src={src} alt={alt} className={className} />
+        )}
+      </>
+    );
+  };
+
   // Sort auctions to show ongoing first
   const sortAuctions = (auctionsList) => {
     return [...auctionsList].sort((a, b) => {
@@ -109,11 +154,65 @@ const AuctioneerDashboard = () => {
 
   const fetchAuctions = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      // Sort before setting state
+    try {
+      // Try to read auctioner id from sessionStorage (set at signin)
+      let auctionerId = '';
+      try {
+        const auctioneerDataJson = sessionStorage.getItem('auctioneerData');
+        if (auctioneerDataJson) {
+          const auctioneerData = JSON.parse(auctioneerDataJson);
+          if (auctioneerData && auctioneerData._id) auctionerId = auctioneerData._id;
+        }
+      } catch (err) {
+        console.warn('Could not read auctioneerData from sessionStorage', err);
+      }
+
+      // fallback to localStorage if not present
+      if (!auctionerId) auctionerId = localStorage.getItem('auctioneerId') || localStorage.getItem('auctioneer_id') || '';
+
+      if (!auctionerId) {
+        // no auctioner id available — use dummy data
+        setAuctions(sortAuctions(dummyAuctions));
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await fetch(`http://localhost:9000/api/auctions/by-auctioner/${auctionerId}`);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to fetch auctions for auctioner', text);
+        setApiError(`Failed to load auctions: ${text || res.statusText}`);
+        // fallback to dummy data on error
+        setAuctions(sortAuctions(dummyAuctions));
+        setIsLoading(false);
+        return;
+      }
+
+      const json = await res.json();
+      // backend returns { auctions: [...] }
+      const fetched = Array.isArray(json.auctions) ? json.auctions : [];
+
+      // Normalize fields if necessary and sort
+      const normalized = fetched.map(a => ({
+        _id: a._id,
+        title: a.title,
+        description: a.description || '',
+        basePrice: typeof a.basePrice === 'number' ? a.basePrice : Number(a.basePrice) || 0,
+        startDateTime: a.startDateTime || a.start || '',
+        endDateTime: a.endDateTime || a.end || '',
+        status: a.status || 'upcoming',
+        imageUrl: a.imageUrl || '',
+        imageBase64: a.imageBase64 || null,
+      }));
+
+      setAuctions(sortAuctions(normalized));
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
+      setApiError('Network error while loading auctions');
       setAuctions(sortAuctions(dummyAuctions));
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   const handleDeleteAuction = async (auctionId) => {
@@ -201,6 +300,22 @@ const AuctioneerDashboard = () => {
         </div>
       </nav>
 
+      {/* API Error Banner */}
+      {apiError && (
+        <div className="max-w-7xl mx-auto mt-4 px-6">
+          <div className="bg-red-600/10 border border-red-600/30 text-red-300 p-3 rounded-lg">
+            <strong className="mr-2">Error:</strong>
+            <span>{apiError}</span>
+            <button
+              onClick={() => setApiError(null)}
+              className="ml-4 text-sm px-2 py-1 bg-red-600/20 rounded hover:bg-red-600/30"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Search and Filter Bar */}
         <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700/50 mb-6 shadow-xl">
@@ -281,13 +396,10 @@ const AuctioneerDashboard = () => {
                 <div className="flex flex-col md:flex-row">
                   {/* Image Section */}
                   <div className="md:w-48 h-32 md:h-40 flex-shrink-0">
-                    <img 
-                      src={auction.imageUrl} 
+                    <RemoteImage
+                      src={auction.imageBase64 ? `data:image/jpeg;base64,${auction.imageBase64}` : auction.imageUrl}
                       alt={auction.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/400x300/1e293b/64748b?text=No+Image';
-                      }}
                     />
                   </div>
 

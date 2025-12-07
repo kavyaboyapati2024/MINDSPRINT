@@ -75,8 +75,20 @@ const AuctioneerSignin = () => {
       if (result.success) {
         setLoginSuccess(true);
 
+        // Store auctioneer data in sessionStorage and state
+        const auctioneerInfo = data.auctioner || data.auctioneer || {
+          _id: data._id,
+          accountType: data.accountType,
+          email: data.email,
+        };
+        try {
+          sessionStorage.setItem('auctioneerData', JSON.stringify(auctioneerInfo));
+        } catch (err) {
+          console.warn('Unable to write auctioneer data to sessionStorage', err);
+        }
+
         // Store auctioneerId in state
-        setAuctioneerId(data.auctioneerId || data._id);
+        setAuctioneerId(auctioneerInfo._id);
 
         // redirect to auctioneer dashboard after 2s
         setTimeout(() => {

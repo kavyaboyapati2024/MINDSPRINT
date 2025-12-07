@@ -390,6 +390,75 @@ export const getAuctionImage = async (req, res) => {
   }
 };
 
+// Get auctions by bidder id (auctions where the bidder has placed bids)
+export const getAuctionsByBidderId = async (req, res) => {
+  try {
+    const { bidderId } = req.params;
+
+    if (!bidderId) {
+      return res.status(400).json({ message: 'bidderId is required' });
+    }
+
+    // Get distinct auction IDs where this user has placed bids
+    const auctionIds = await Bid.find({ userId: bidderId }).distinct('auctionId');
+
+    if (!auctionIds || auctionIds.length === 0) {
+      return res.status(200).json({ auctions: [] });
+    }
+
+    // Fetch auctions and populate auctioner name, exclude file to keep response small
+    let auctions = await Auction.find({ _id: { $in: auctionIds } })
+      .select('-file')
+      .populate('auctionerId', 'name')
+      .lean();
+
+    // Add image URL and include base64 image data directly in JSON
+    auctions = auctions.map((a) => {
+      const { file, ...rest } = a;
+      return {
+        ...rest,
+        imageBase64: file || null,
+        imageUrl: `${req.protocol}://${req.get('host')}/api/auctions/${a._id}/image`,
+      };
+    });
+
+    return res.status(200).json({ auctions });
+  } catch (error) {
+    console.error('Error fetching auctions by bidderId:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get auctions by auctioner id (auctions created by a specific auctioneer)
+export const getAuctionsByAuctionerId = async (req, res) => {
+  try {
+    const { auctionerId } = req.params;
+
+    if (!auctionerId) {
+      return res.status(400).json({ message: 'auctionerId is required' });
+    }
+
+    let auctions = await Auction.find({ auctionerId })
+      .select('-file')
+      .populate('auctionerId', 'name')
+      .lean();
+
+    auctions = auctions.map((a) => {
+      const { file, ...rest } = a;
+      return {
+        ...rest,
+        imageBase64: file || null,
+        imageUrl: `${req.protocol}://${req.get('host')}/api/auctions/${a._id}/image`,
+      };
+    });
+
+    return res.status(200).json({ auctions });
+  } catch (error) {
+    console.error('Error fetching auctions by auctionerId:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const resetDemo = async (req, res) => {
   try {
     const { userId, auctionId } = req.body;
