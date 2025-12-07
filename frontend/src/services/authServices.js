@@ -81,6 +81,11 @@ class AuthService {
 
       const data = await response.json();
       
+      // Store user data in session storage after successful registration
+      if (response.ok && data.user) {
+        this.setUserData(data.user);
+      }
+      
       return {
         success: response.ok,
         status: response.status,
@@ -111,6 +116,11 @@ class AuthService {
 
       const data = await response.json();
       
+      // Store user data in session storage after successful login
+      if (response.ok && data.user) {
+        this.setUserData(data.user);
+      }
+      
       return {
         success: response.ok,
         status: response.status,
@@ -127,6 +137,46 @@ class AuthService {
     }
   }
 
+  // Store user data in session storage
+  static setUserData(userData) {
+    try {
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      console.log('User data stored in session storage:', userData);
+    } catch (error) {
+      console.error('Error storing user data:', error);
+    }
+  }
+
+  // Get current logged-in user from session storage
+  static getCurrentUser() {
+    try {
+      const userData = sessionStorage.getItem('user');
+      if (userData) {
+        return JSON.parse(userData);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error retrieving user data:', error);
+      return null;
+    }
+  }
+
+  // Check if user is authenticated
+  static isAuthenticated() {
+    const user = this.getCurrentUser();
+    return user !== null;
+  }
+
+  // Clear user data from session storage
+  static clearUserData() {
+    try {
+      sessionStorage.removeItem('user');
+      console.log('User data cleared from session storage');
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  }
+
   // Logout user
   static async logout() {
     try {
@@ -140,6 +190,11 @@ class AuthService {
 
       const data = await response.json();
       
+      // Clear user data from session storage after logout
+      if (response.ok) {
+        this.clearUserData();
+      }
+      
       return {
         success: response.ok,
         status: response.status,
@@ -147,6 +202,8 @@ class AuthService {
       };
     } catch (error) {
       console.error('Logout Error:', error);
+      // Clear session storage even if API call fails
+      this.clearUserData();
       return {
         success: false,
         status: 500,

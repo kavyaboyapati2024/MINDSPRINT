@@ -7,7 +7,6 @@ import AuthService from '../services/authServices'; // adjust the path if needed
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [authToken, setAuthToken] = useState(null);
   const [userData, setUserData] = useState(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -29,6 +28,40 @@ const Navbar = () => {
   const isActiveRoute = (route) => {
     return location.pathname === route;
   };
+
+  // Load user data from session storage on component mount
+  useEffect(() => {
+    const loadUserData = () => {
+      const user = AuthService.getCurrentUser();
+      
+      if (user) {
+        setUserData(user);
+        console.log('User data loaded:', user);
+      } else {
+        console.log('No user data found');
+        // Optionally redirect to signin if no user data
+        // navigate('/signin/user');
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  // Listen for storage changes (useful if user logs in from another tab)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'user') {
+        const user = AuthService.getCurrentUser();
+        setUserData(user);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -69,12 +102,11 @@ const Navbar = () => {
         if (result.success) {
           console.log('Logout successful:', result);
           
-          // Clear local state instead of localStorage
-          setAuthToken(null);
+          // Clear local state
           setUserData(null);
           
           // Redirect to signin page
-          navigate('/signin');
+          navigate('/signin/user');
           
         } else {
           console.error('Logout failed:', result);
@@ -82,7 +114,6 @@ const Navbar = () => {
           // Handle different error cases
           if (result.status === 401) {
             // User already logged out or session expired
-            setAuthToken(null);
             setUserData(null);
             navigate('/signin');
           } else {
@@ -102,6 +133,52 @@ const Navbar = () => {
     } else if (itemName === 'My Auctions') {
       navigate('/my-auctions');
     }
+  };
+
+  // Helper function to get user's display name
+  const getUserDisplayName = () => {
+    if (!userData) return 'Guest User';
+    
+    // Try different possible name fields in order of preference
+    if (userData.fullName) return userData.fullName;
+    if (userData.name) return userData.name;
+    if (userData.firstName && userData.lastName) {
+      return `${userData.firstName} ${userData.lastName}`;
+    }
+    if (userData.firstName) return userData.firstName;
+    if (userData.userName) return userData.userName;
+    if (userData.username) return userData.username;
+    if (userData.email) return userData.email.split('@')[0]; // Use email prefix as fallback
+    
+    return 'User';
+  };
+
+  // Helper function to get user's role/type
+  const getUserRole = () => {
+    if (!userData) return 'Guest';
+    
+    // Try different possible role fields
+    if (userData.role) return userData.role;
+    if (userData.userType) return userData.userType;
+    if (userData.accountType) return userData.accountType;
+    
+    return 'Bidder'; // Default role
+  };
+
+  // Helper function to get user initials for avatar
+  const getUserInitials = () => {
+    const displayName = getUserDisplayName();
+    
+    if (displayName === 'Guest User' || displayName === 'User') {
+      return 'GU';
+    }
+    
+    const names = displayName.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    
+    return displayName.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -181,15 +258,29 @@ const Navbar = () => {
             {isDropdownOpen && (
               <div className="absolute right-0 top-full mt-3 w-72 bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300">
                 
-                {/* User Info Header */}
+                {/* User Info Header - Now Dynamic */}
                 <div className="px-6 py-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-b border-slate-700/50">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
+                      {userData?.profilePicture || userData?.avatar ? (
+                        <img 
+                          src={userData.profilePicture || userData.avatar} 
+                          alt="Profile" 
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">
+                          {getUserInitials()}
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <h3 className="text-white font-semibold text-sm">John Doe</h3>
-                      <p className="text-slate-400 text-xs">Premium Bidder</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold text-sm truncate">
+                        {getUserDisplayName()}
+                      </h3>
+                      <p className="text-slate-400 text-xs truncate">
+                        {getUserRole()}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -226,8 +317,11 @@ const Navbar = () => {
                 
                 {/* Footer */}
                 <div className="px-6 py-3 bg-slate-800/50 border-t border-slate-700/50">
-                  <div className="flex items-center justify-end text-xs text-slate-500">
-                    <span className="flex items-center space-x-1">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    {userData?.email && (
+                      <span className="truncate flex-1 mr-2">{userData.email}</span>
+                    )}
+                    <span className="flex items-center space-x-1 flex-shrink-0">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span>Online</span>
                     </span>
