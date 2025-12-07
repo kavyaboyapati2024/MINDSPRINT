@@ -268,4 +268,21 @@ export const logoutAuctioner = (req, res) => {
   }
 };
 
+// Get auctioner details by id
+export const getAuctionerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'auctioner id is required' });
+
+    const auctioner = await Auctioner.findById(id).select('-password -__v');
+    if (!auctioner) return res.status(404).json({ message: 'Auctioner not found' });
+
+    // Return auctioner object directly
+    return res.status(200).json({ auctioner });
+  } catch (error) {
+    console.error('getAuctionerById error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 

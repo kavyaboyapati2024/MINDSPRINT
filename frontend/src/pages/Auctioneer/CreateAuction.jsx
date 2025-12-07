@@ -15,6 +15,7 @@ const CreateAuction = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
+  const [modal, setModal] = useState({ show: false, title: '', message: '' });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -95,9 +96,24 @@ const CreateAuction = () => {
     formDataToSend.append('startDateTime', formData.startDateTime);
     formDataToSend.append('endDateTime', formData.endDateTime);
     formDataToSend.append('file', formData.file);
+    // Attach auctionerId preferring sessionStorage (set at signin), fallback to localStorage
+    let auctionerId = '';
+    try {
+      const auctioneerDataJson = sessionStorage.getItem('auctioneerData');
+      if (auctioneerDataJson) {
+        const auctioneerData = JSON.parse(auctioneerDataJson);
+        if (auctioneerData && auctioneerData._id) auctionerId = auctioneerData._id;
+      }
+    } catch (err) {
+      console.warn('Could not read auctioneerData from sessionStorage', err);
+    }
+    if (!auctionerId) {
+      auctionerId = localStorage.getItem('auctioneerId') || localStorage.getItem('auctioneer_id') || '';
+    }
+    if (auctionerId) formDataToSend.append('auctionerId', auctionerId);
 
     try {
-      const response = await fetch('/api/auctions/create', {
+      const response = await fetch('http://localhost:9000/api/auctions/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -107,7 +123,8 @@ const CreateAuction = () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Auction created successfully!');
+        // Show success modal; navigation will happen when user clicks OK
+        setModal({ show: true, title: 'Success', message: 'Auction created successfully!' });
       } else {
         setErrors({ general: data.message || 'Failed to create auction' });
       }
@@ -123,6 +140,7 @@ const CreateAuction = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-slate-900 relative overflow-hidden">
       {/* Subtle Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
@@ -354,6 +372,29 @@ const CreateAuction = () => {
         </div>
       </div>
     </div>
+
+      {/* Success Modal */}
+      {modal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModal({ show: false, title: '', message: '' })}></div>
+          <div className="relative bg-slate-900/95 p-6 rounded-xl w-full max-w-md mx-4 border border-slate-700/50 shadow-lg">
+            <h3 className="text-lg font-semibold text-white mb-2">{modal.title}</h3>
+            <p className="text-slate-300 mb-4">{modal.message}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setModal({ show: false, title: '', message: '' });
+                  navigate('/auctioneer-dashboard', { replace: true });
+                }}
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

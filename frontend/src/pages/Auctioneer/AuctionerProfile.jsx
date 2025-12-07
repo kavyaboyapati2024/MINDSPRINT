@@ -28,12 +28,46 @@ const AuctioneerProfile = () => {
 
   // Load auctioneer data from session storage on mount
   useEffect(() => {
-    const loadAuctioneerData = () => {
-      const currentUser = AuthService.getCurrentUser();
-      
+    const loadAuctioneerData = async () => {
+      // Prefer sessionStorage key 'auctioneerData' to load profile
+      let currentUser = null;
+      try {
+        const raw = sessionStorage.getItem('auctioneerData');
+        if (raw) currentUser = JSON.parse(raw);
+      } catch (err) {
+        console.warn('Failed to parse sessionStorage.auctioneerData', err);
+      }
+
+      // Fallback to AuthService.getCurrentUser() if sessionStorage missing
+      if (!currentUser && typeof AuthService.getCurrentUser === 'function') {
+        try { currentUser = AuthService.getCurrentUser(); } catch (err) { /* ignore */ }
+      }
+
       if (currentUser) {
-        console.log('Loaded auctioneer data:', currentUser);
-        
+        console.log('Loaded auctioneer data (from session/Auth):', currentUser);
+
+        // If we have an id, attempt to fetch the canonical auctioneer record from backend
+        const auctionerId = currentUser._id || currentUser.id || currentUser.userId;
+        if (auctionerId) {
+          try {
+            const resp = await fetch(`http://localhost:9000/api/auctioners/${auctionerId}`);
+            if (resp.ok) {
+              const body = await resp.json();
+              // backend returns { auctioner }
+              const remote = body && body.auctioner ? body.auctioner : body;
+              if (remote) {
+                // merge remote values with currentUser (remote takes precedence)
+                currentUser = { ...currentUser, ...remote };
+                console.log('Merged auctioneer data from server:', currentUser);
+              }
+            } else {
+              console.warn('Failed to fetch auctioneer details from server:', resp.statusText);
+            }
+          } catch (err) {
+            console.warn('Error fetching auctioneer details:', err);
+          }
+        }
+
         setProfileData(prev => ({
           ...prev,
           accountType: currentUser.accountType || currentUser.type || 'personal',
@@ -56,7 +90,6 @@ const AuctioneerProfile = () => {
         }));
       } else {
         console.log('No auctioneer data found, redirecting to signin');
-        // Redirect to auctioneer signin if no user is logged in
         navigate('/signin/auctioneer');
       }
     };
@@ -88,7 +121,7 @@ const AuctioneerProfile = () => {
 
   const handleSave = async () => {
     // Update session storage with new data
-    const currentUser = AuthService.getCurrentUser();
+    const currentUser = AuthService.getCurrentUser ? AuthService.getCurrentUser() : null;
     if (currentUser) {
       const updatedUser = {
         ...currentUser,
@@ -110,8 +143,15 @@ const AuctioneerProfile = () => {
         bio: profileData.bio
       };
       
-      // Save to session storage
-      AuthService.setUserData(updatedUser);
+      // Save to session storage (and AuthService if available)
+      try {
+        sessionStorage.setItem('auctioneerData', JSON.stringify(updatedUser));
+      } catch (err) {
+        console.warn('Failed to write auctioneerData to sessionStorage', err);
+      }
+      if (typeof AuthService.setUserData === 'function') {
+        try { AuthService.setUserData(updatedUser); } catch (err) { console.warn('AuthService.setUserData failed', err); }
+      }
       console.log('Profile updated in session storage:', updatedUser);
       
       // Optional: Send update to backend API

@@ -9,6 +9,8 @@ import {
   getAuctionFile,
   isRegisteredForAuction,
   getOngoingAuctionsById,
+  getAuctionsByBidderId,
+  getAuctionsByAuctionerId,
    getAuctionById,
   getAuctionImage,
   resetDemo,
@@ -42,6 +44,10 @@ router.get("/auction-file/:auctionId", getAuctionFile);
 router.post("/check-registration-status", isRegisteredForAuction)
 
 router.post("/ongoing-by-id", getOngoingAuctionsById)
+
+router.get('/by-bidder/:bidderId', getAuctionsByBidderId);
+
+router.get('/by-auctioner/:auctionerId', getAuctionsByAuctionerId);
 
 router.get("/:id", getAuctionById);
 
