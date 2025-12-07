@@ -3,11 +3,14 @@ import {
   Edit3, Save, X, Camera, Mail, Phone, MapPin, 
   Calendar, Shield, Star, User, ArrowLeft
 } from 'lucide-react';
+import AuthService from '../services/authServices'; // Import AuthService
+import { useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   
-  // User data state - now includes logic to get username from signup/localStorage
+  // User data state - now uses session storage via AuthService
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -16,7 +19,7 @@ const UserProfile = () => {
     bio: '',
     website: '',
     company: '',
-    joinDate: 'March 2024', // This would come from registration
+    joinDate: 'March 2024',
     verified: false,
     rating: 0
   });
@@ -26,22 +29,30 @@ const UserProfile = () => {
 
   // Load user data on component mount
   useEffect(() => {
-    // Try to get user data from localStorage or context/props
-    const savedUserData = localStorage.getItem('userData');
-    if (savedUserData) {
-      const parsedData = JSON.parse(savedUserData);
+    // Get user data from session storage via AuthService
+    const currentUser = AuthService.getCurrentUser();
+    
+    if (currentUser) {
       setUserData(prev => ({
         ...prev,
-        name: parsedData.userName || parsedData.name || '',
-        email: parsedData.email || '',
-        // You can add more fields as needed
+        name: currentUser.userName || currentUser.name || currentUser.fullName || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || currentUser.phoneNumber || '',
+        location: currentUser.location || currentUser.address || '',
+        bio: currentUser.bio || currentUser.about || '',
+        website: currentUser.website || '',
+        company: currentUser.company || '',
+        verified: currentUser.verified || currentUser.isVerified || false,
+        rating: currentUser.rating || 0,
+        // Store the original user ID for updates
+        userId: currentUser.id || currentUser._id || currentUser.userId
       }));
+    } else {
+      // No user logged in, redirect to signin
+      console.log('No user found in session, redirecting to signin');
+      navigate('/signin/user');
     }
-    
-    // Alternative: If you're using React Router or props, you could get data like this:
-    // const userData = location.state?.userData || {};
-    // setUserData(prev => ({ ...prev, ...userData }));
-  }, []);
+  }, [navigate]);
 
   // Update editData when userData changes
   useEffect(() => {
@@ -53,12 +64,52 @@ const UserProfile = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Update local state
     setUserData({ ...editData });
     setIsEditing(false);
     
-    // Save to localStorage
-    localStorage.setItem('userData', JSON.stringify(editData));
+    // Update session storage with new data
+    const currentUser = AuthService.getCurrentUser();
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        userName: editData.name,
+        name: editData.name,
+        email: editData.email,
+        phone: editData.phone,
+        location: editData.location,
+        bio: editData.bio,
+        website: editData.website,
+        company: editData.company
+      };
+      
+      // Save updated data to session storage
+      AuthService.setUserData(updatedUser);
+      
+      // Optional: Send update to backend API
+      // You would need to create an update profile endpoint
+      /*
+      try {
+        const response = await fetch('http://localhost:9000/api/authUsers/update-profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(updatedUser)
+        });
+        
+        if (response.ok) {
+          console.log('Profile updated successfully on server');
+        }
+      } catch (error) {
+        console.error('Error updating profile on server:', error);
+      }
+      */
+    }
+    
+    console.log('Profile updated successfully');
   };
 
   const handleCancel = () => {
@@ -75,14 +126,21 @@ const UserProfile = () => {
 
   const getInitials = (name) => {
     if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const handleBack = () => {
+    navigate(-1); // Go back to previous page
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
       {/* Back Button */}
       <div className="absolute top-6 right-6 z-20">
-        <button className="bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-sm text-white p-2 rounded-lg border border-sky-500/30 transition-colors">
+        <button 
+          onClick={handleBack}
+          className="bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-sm text-white p-2 rounded-lg border border-sky-500/30 transition-colors"
+        >
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
@@ -108,7 +166,6 @@ const UserProfile = () => {
               <h2 className="text-xl font-semibold text-white">
                 {(isEditing ? editData.name : userData.name) || 'User Name'}
               </h2>
-             
             </div>
             
             <div className="flex items-center justify-center space-x-2 mb-3">
@@ -156,12 +213,12 @@ const UserProfile = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-slate-400">
                   <span>Progress</span>
-                  <span>{Math.round((Object.values(userData).filter(v => v && v !== '').length / 8) * 100)}%</span>
+                  <span>{Math.round((Object.values(userData).filter(v => v && v !== '' && v !== false && v !== 0).length / Object.keys(userData).length) * 100)}%</span>
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-2">
                   <div 
                     className="bg-gradient-to-r from-sky-400 to-purple-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.round((Object.values(userData).filter(v => v && v !== '').length / 8) * 100)}%` }}
+                    style={{ width: `${Math.round((Object.values(userData).filter(v => v && v !== '' && v !== false && v !== 0).length / Object.keys(userData).length) * 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -230,15 +287,19 @@ const UserProfile = () => {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Full Name
                   </label>
-                 
+                  {isEditing ? (
                     <input
                       type="text"
-                      
+                      value={editData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       placeholder="Enter your full name"
                       className="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-3 focus:border-sky-400 focus:outline-none transition-colors"
                     />
-                  
+                  ) : (
+                    <div className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg px-4 py-3 min-h-[48px] flex items-center">
+                      {userData.name || <span className="text-slate-500">Not provided</span>}
+                    </div>
+                  )}
                 </div>
 
                 {/* Email */}

@@ -20,6 +20,9 @@ import MyAuctions from "./pages/MyAuctions"
 import AuctioneerSignin from "./pages/Auctioneer/Signin";
 import AuctioneerSignup from "./pages/Auctioneer/Signup";
 import AuctioneerForgotPassword from "./pages/Auctioneer/AuctioneerForgotPassword";
+import AuctioneerDashboard from "./pages/Auctioneer/AuctioneerDashboard";
+import CreateAuction from "./pages/Auctioneer/CreateAuction";
+import AuctioneerProfile from "./pages/Auctioneer/AuctionerProfile";
 
 function App() {
   return (
@@ -43,6 +46,9 @@ function App() {
       <Route path="/signin/auctioneer" element={<AuctioneerSignin/>}/>
       <Route path="signup/auctioneer" element={<AuctioneerSignup/>}/>
       <Route path="forgot-password/auctioneer" element={<AuctioneerForgotPassword/>}/>
+      <Route path="/auctioneer-dashboard" element={<AuctioneerDashboard/>}/>
+      <Route path="/create-auction" element={<CreateAuction/>}/>
+      <Route path="/auctioneer-profile" element={<AuctioneerProfile/>}/>
     </Routes>
   );
 }
