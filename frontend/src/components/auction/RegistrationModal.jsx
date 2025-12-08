@@ -9,6 +9,7 @@ import {
   DollarSign,
   X,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -28,8 +29,8 @@ const RegistrationModal = ({
   });
   const [errors, setErrors] = useState({});
   const [paymentDone, setPaymentDone] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  // ✅ place useNavigate here
   const navigate = useNavigate();
 
   // Check Stripe redirect status
@@ -62,6 +63,7 @@ const RegistrationModal = ({
     setFormData({ fullName: "", email: "", phone: "", address: "" });
     setErrors({});
     setPaymentDone(false);
+    setIsRegistering(false);
     onClose();
   };
 
@@ -99,6 +101,8 @@ const RegistrationModal = ({
   const handleSubmit = async () => {
     if (!selectedAuction) return;
     if (!validateStep()) return;
+
+    setIsRegistering(true);
 
     try {
       // 1️⃣ Generate key from Python QKD backend
@@ -140,6 +144,7 @@ const RegistrationModal = ({
 
       if (!registerResponse.ok) {
         alert("Registration failed. Please try again later.");
+        setIsRegistering(false);
         return;
       }
 
@@ -153,11 +158,13 @@ const RegistrationModal = ({
       });
 
       alert("Registered successfully!");
+      setIsRegistering(false);
       handleClose();
       navigate("/home");
     } catch (err) {
       console.error("Registration error:", err);
       alert("Registration failed. Please try again later.");
+      setIsRegistering(false);
     }
   };
 
@@ -245,12 +252,13 @@ const RegistrationModal = ({
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
+                  disabled={isRegistering}
                   placeholder="Enter your full name"
                   className={`w-full bg-slate-700/50 border rounded-lg pl-10 pr-3 py-3 text-sm text-slate-200 placeholder-slate-400 outline-none transition-all ${
                     errors.fullName
                       ? "border-red-500 focus:border-red-500"
                       : "border-slate-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                  }`}
+                  } ${isRegistering ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
               </div>
               {errors.fullName && (
@@ -270,12 +278,13 @@ const RegistrationModal = ({
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isRegistering}
                   placeholder="Enter your email"
                   className={`w-full bg-slate-700/50 border rounded-lg pl-10 pr-3 py-3 text-sm text-slate-200 placeholder-slate-400 outline-none transition-all ${
                     errors.email
                       ? "border-red-500 focus:border-red-500"
                       : "border-slate-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                  }`}
+                  } ${isRegistering ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
               </div>
               {errors.email && (
@@ -295,12 +304,13 @@ const RegistrationModal = ({
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  disabled={isRegistering}
                   placeholder="Enter your phone number"
                   className={`w-full bg-slate-700/50 border rounded-lg pl-10 pr-3 py-3 text-sm text-slate-200 placeholder-slate-400 outline-none transition-all ${
                     errors.phone
                       ? "border-red-500 focus:border-red-500"
                       : "border-slate-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                  }`}
+                  } ${isRegistering ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
               </div>
               {errors.phone && (
@@ -319,13 +329,14 @@ const RegistrationModal = ({
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  disabled={isRegistering}
                   placeholder="Enter your complete address"
                   rows={4}
                   className={`w-full bg-slate-700/50 border rounded-lg pl-10 pr-3 py-3 text-sm text-slate-200 placeholder-slate-400 outline-none transition-all ${
                     errors.address
                       ? "border-red-500 focus:border-red-500"
                       : "border-slate-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                  }`}
+                  } ${isRegistering ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
               </div>
               {errors.address && (
@@ -335,9 +346,23 @@ const RegistrationModal = ({
 
             <button
               onClick={handleSubmit}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium mt-4"
+              disabled={isRegistering}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium mt-4 transition-all ${
+                isRegistering
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:shadow-lg"
+              }`}
             >
-              <DollarSign className="w-4 h-4" /> Register
+              {isRegistering ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Key generation in progress...
+                </>
+              ) : (
+                <>
+                  <DollarSign className="w-4 h-4" /> Register
+                </>
+              )}
             </button>
           </div>
         );
@@ -353,7 +378,7 @@ const RegistrationModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
-        onClick={handleClose}
+        onClick={isRegistering ? null : handleClose}
       />
       <div className="relative w-full max-w-md bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
         {/* Header */}
@@ -370,7 +395,10 @@ const RegistrationModal = ({
           </div>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/50"
+            disabled={isRegistering}
+            className={`text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/50 ${
+              isRegistering ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -407,7 +435,10 @@ const RegistrationModal = ({
           {currentStep > 1 && (
             <button
               onClick={prevStep}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg"
+              disabled={isRegistering}
+              className={`flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg ${
+                isRegistering ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
@@ -415,7 +446,10 @@ const RegistrationModal = ({
           {currentStep === 1 && paymentDone && (
             <button
               onClick={nextStep}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium"
+              disabled={isRegistering}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium ${
+                isRegistering ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               Next <ChevronRight className="w-4 h-4" />
             </button>

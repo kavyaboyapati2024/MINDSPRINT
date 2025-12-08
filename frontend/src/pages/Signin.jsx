@@ -133,7 +133,7 @@ const Signin = () => {
               className="text-3xl font-bold text-white mb-4"
               style={{ textShadow: "0 0 15px rgba(255, 255, 255, 0.2)" }}
             >
-              Welcome Back! 🎉
+              Welcome Back! 
             </h2>
 
             <p className="text-slate-300/90 text-lg leading-relaxed mb-6">

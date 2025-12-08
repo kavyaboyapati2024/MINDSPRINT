@@ -349,7 +349,7 @@ const AuctioneerDashboard = () => {
   };
 
   const handleViewAuction = (auction) => {
-    alert(`View auction: ${auction.title}`);
+    navigate("/live-panel");
   };
 
   const handleProfileClick = () => {
@@ -596,8 +596,8 @@ const AuctioneerDashboard = () => {
                         {/* Price and Date Info Combined */}
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="inline-flex items-center px-3 py-1.5 bg-sky-500/10 border border-sky-500/30 rounded-lg">
-                            <DollarSign size={16} className="mr-1 text-sky-400" />
-                            <span className="text-sky-400 font-bold text-sm">${auction.basePrice.toLocaleString()}</span>
+                            <span className="text-sky-400 font-bold text-sm mr-1">₹</span>
+                            <span className="text-sky-400 font-bold text-sm">{auction.basePrice.toLocaleString()}</span>
                           </div>
                           
                           <div className="flex items-center text-xs text-slate-400">
