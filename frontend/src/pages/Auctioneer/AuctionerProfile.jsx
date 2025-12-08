@@ -157,7 +157,7 @@ const AuctioneerProfile = () => {
       // Optional: Send update to backend API
       /*
       try {
-        const response = await fetch('http://localhost:9000/api/auctioneers/update-profile', {
+        const response = await fetch('http://localhost:9000/api/auctioners/update-profile', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

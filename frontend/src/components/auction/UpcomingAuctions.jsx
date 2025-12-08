@@ -55,7 +55,24 @@ const UpcomingAuctions = ({ userId }) => {
             : Promise.resolve({ data: { registeredAuctionIds: [] } }),
         ]);
 
-        setUpcomingAuctions(upcomingRes.data.upcoming);
+        // Enrich auctions with canonical auctioner name when auctionerId available
+        const raw = Array.isArray(upcomingRes.data.upcoming) ? upcomingRes.data.upcoming : [];
+        const enriched = await Promise.all(raw.map(async (a) => {
+          // prefer server-provided auctionerId when present
+          const auctionerId = a.auctionerId || a.auctioner_id || a.auctionerId;
+          if (auctionerId) {
+            try {
+              const { getAuctionerName } = await import('../../services/auctionerService.js');
+              const name = await getAuctionerName(auctionerId);
+              return { ...a, auctioneer: name || a.auctioneer || a.auctioneerName };
+            } catch (err) {
+              return { ...a, auctioneer: a.auctioneer || a.auctioneerName };
+            }
+          }
+          return { ...a, auctioneer: a.auctioneer || a.auctioneerName };
+        }));
+
+        setUpcomingAuctions(enriched);
         setRegisteredAuctions(new Set(registeredRes.data.registeredAuctionIds));
       } catch (err) {
         setError("Failed to load auctions");

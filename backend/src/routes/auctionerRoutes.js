@@ -6,12 +6,14 @@ import {
   forgotAuctionerPassword,
   logoutAuctioner,
   getAuctionerById,
+  getAuctionerName,
 } from "../controllers/auctionerControllers.js";
 import { protectRoute } from "../middlewares/jwtToken.js";
 
 const router = express.Router();
 
 router.get('/:id', getAuctionerById);
+router.get('/:id/name', getAuctionerName);
 
 router.post("/register", registerAuctioner);
 

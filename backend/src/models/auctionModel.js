@@ -13,6 +13,8 @@ const auctionSchema = new mongoose.Schema(
     startDateTime: { type: Date, required: true },
     endDateTime: { type: Date, required: true },
     file: { type: String, required: true },
+    // Flag set when a report has been generated for this auction
+    reportGenerated: { type: Boolean, default: false },
     status: {
       type: String,
       enum: ["upcoming", "ongoing", "past"],
