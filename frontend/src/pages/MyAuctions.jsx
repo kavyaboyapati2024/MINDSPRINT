@@ -1,20 +1,17 @@
 import { useState } from 'react';
-import { 
-  ArrowLeft, Filter, Search, Calendar, Clock, 
-  Gavel, IndianRupee, PlayCircle
-} from 'lucide-react';
+import { ArrowLeft, Filter, Search, Calendar, Clock, Gavel, PlayCircle } from 'lucide-react';
 
 const MyAuctions = () => {
   const [activeTab, setActiveTab] = useState('ongoing');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock auction data - removed completed auctions and location/bidder info
+  // Mock auction data with actual image URLs
   const auctions = {
     ongoing: [
       {
         id: 1,
         title: 'Vintage Rolex Submariner Watch',
-        image: '⌚',
+        image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&h=300&fit=crop',
         startingBid: 120000,
         timeLeft: '2h 30m',
         status: 'active',
@@ -23,7 +20,7 @@ const MyAuctions = () => {
       {
         id: 2,
         title: 'Classic BMW Motorcycle 1970',
-        image: '🏍️',
+        image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&h=300&fit=crop',
         startingBid: 250000,
         timeLeft: '1d 5h',
         status: 'active',
@@ -32,7 +29,7 @@ const MyAuctions = () => {
       {
         id: 3,
         title: 'Antique Persian Carpet',
-        image: '🪞',
+        image: 'https://images.unsplash.com/photo-1600166898405-da9535204843?w=400&h=300&fit=crop',
         startingBid: 60000,
         timeLeft: '4h 15m',
         status: 'active',
@@ -43,7 +40,7 @@ const MyAuctions = () => {
       {
         id: 4,
         title: 'Original Pablo Picasso Sketch',
-        image: '🎨',
+        image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop',
         startingBid: 350000,
         startTime: '2024-12-20 10:00 AM',
         status: 'scheduled'
@@ -51,7 +48,7 @@ const MyAuctions = () => {
       {
         id: 5,
         title: 'Rare Diamond Necklace',
-        image: '💎',
+        image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
         startingBid: 550000,
         startTime: '2024-12-22 2:00 PM',
         status: 'scheduled'
@@ -63,37 +60,52 @@ const MyAuctions = () => {
     auction.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleNavigateHome = () => {
+    window.location.href = '/home';
+  };
+
+  const handleJoinAuction = (auctionId) => {
+    window.location.href = '/live-auction';
+  };
+
   const renderOngoingAuction = (auction) => (
-    <div key={auction.id} className="bg-slate-900/90 backdrop-blur-xl rounded-2xl p-3 md:p-4 border border-sky-500/30 hover:border-sky-400/50 transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3">
-        <div className="flex items-center space-x-3 mb-3 sm:mb-0">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-slate-700 to-slate-600 rounded-xl flex items-center justify-center text-xl md:text-2xl flex-shrink-0">
-            {auction.image}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-white font-semibold text-sm md:text-base mb-1 truncate">{auction.title}</h3>
-            <div className="text-sm text-slate-400">
-              <span>Auction in progress</span>
-            </div>
-          </div>
+    <div key={auction.id} className="bg-slate-900/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-sky-500/30 hover:border-sky-400/50 transition-all">
+      {/* Image Section */}
+      <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-800">
+        <img 
+          src={auction.image} 
+          alt={auction.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        />
+        <div className="absolute top-3 right-3 bg-green-500/90 backdrop-blur-sm px-3 py-1 rounded-full">
+          <span className="text-white text-xs font-semibold">LIVE</span>
         </div>
       </div>
 
-      <div className="mb-3">
-        <div>
-          <p className="text-slate-400 text-xs">Base Amount</p>
-          <p className="text-white font-bold text-base md:text-lg">₹{auction.startingBid.toLocaleString('en-IN')}</p>
+      {/* Content Section */}
+      <div className="p-4">
+        <div className="mb-3">
+          <h3 className="text-white font-semibold text-base md:text-lg mb-2">{auction.title}</h3>
+          <div className="text-sm text-slate-400">
+            <span>Auction in progress</span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-        <div className="flex items-center space-x-2 text-orange-400">
-          <Clock className="w-4 h-4" />
-          <span className="font-medium">{auction.timeLeft} left</span>
+        <div className="mb-4">
+          <p className="text-slate-400 text-xs mb-1">Base Amount</p>
+          <p className="text-white font-bold text-lg md:text-xl">₹{auction.startingBid.toLocaleString('en-IN')}</p>
         </div>
-        <div className="flex space-x-2 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none bg-sky-500 hover:bg-sky-400 text-white px-8 py-1 rounded-lg text-s font-medium transition-colors">
-            Join
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-2 text-orange-400">
+            <Clock className="w-4 h-4" />
+            <span className="font-medium text-sm">{auction.timeLeft} left</span>
+          </div>
+          <button 
+            onClick={() => handleJoinAuction(auction.id)}
+            className="w-full sm:w-auto bg-sky-500 hover:bg-sky-400 text-white px-8 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-lg hover:shadow-sky-500/50"
+          >
+            Join Auction
           </button>
         </div>
       </div>
@@ -101,35 +113,44 @@ const MyAuctions = () => {
   );
 
   const renderUpcomingAuction = (auction) => (
-    <div key={auction.id} className="bg-slate-900/90 backdrop-blur-xl rounded-2xl p-3 md:p-4 border border-sky-500/30 hover:border-sky-400/50 transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4">
-        <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-          <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-slate-700 to-slate-600 rounded-xl flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">
-            {auction.image}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-white font-semibold text-base md:text-lg mb-1 truncate">{auction.title}</h3>
-            <div className="text-sm text-slate-400">
-              <span>Scheduled auction</span>
-            </div>
-          </div>
-        </div>
-        <div className="bg-yellow-500/20 px-3 py-1 rounded-full border border-yellow-500/30 self-start">
-          <span className="text-yellow-400 text-sm font-medium">Upcoming</span>
+    <div key={auction.id} className="bg-slate-900/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-sky-500/30 hover:border-sky-400/50 transition-all">
+      {/* Image Section */}
+      <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-800">
+        <img 
+          src={auction.image} 
+          alt={auction.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        />
+        <div className="absolute top-3 right-3 bg-yellow-500/90 backdrop-blur-sm px-3 py-1 rounded-full">
+          <span className="text-white text-xs font-semibold">UPCOMING</span>
         </div>
       </div>
 
-      <div className="mb-3">
-        <div>
-          <p className="text-slate-400 text-xs">Base Amount</p>
-          <p className="text-white font-bold text-base md:text-lg">₹{auction.startingBid.toLocaleString('en-IN')}</p>
+      {/* Content Section */}
+      <div className="p-4">
+        <div className="mb-3">
+          <h3 className="text-white font-semibold text-base md:text-lg mb-2">{auction.title}</h3>
+          <div className="text-sm text-slate-400">
+            <span>Scheduled auction</span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
-        <div className="flex items-center space-x-2 text-yellow-400">
-          <Calendar className="w-4 h-4" />
-          <span className="font-medium text-sm">{auction.startTime}</span>
+        <div className="mb-4">
+          <p className="text-slate-400 text-xs mb-1">Base Amount</p>
+          <p className="text-white font-bold text-lg md:text-xl">₹{auction.startingBid.toLocaleString('en-IN')}</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-2 text-yellow-400">
+            <Calendar className="w-4 h-4" />
+            <span className="font-medium text-sm">{auction.startTime}</span>
+          </div>
+          <button 
+            disabled
+            className="w-full sm:w-auto bg-slate-700 text-slate-400 px-8 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed"
+          >
+            Not Started
+          </button>
         </div>
       </div>
     </div>
@@ -142,7 +163,10 @@ const MyAuctions = () => {
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
-              <button className="bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-sm text-white p-2 rounded-lg border border-sky-500/30 transition-colors">
+              <button 
+                onClick={handleNavigateHome}
+                className="bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-sm text-white p-2 rounded-lg border border-sky-500/30 transition-colors cursor-pointer"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -194,14 +218,14 @@ const MyAuctions = () => {
         </div>
 
         {/* Content */}
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuctions.length > 0 ? (
             <>
               {activeTab === 'ongoing' && filteredAuctions.map(renderOngoingAuction)}
               {activeTab === 'upcoming' && filteredAuctions.map(renderUpcomingAuction)}
             </>
           ) : (
-            <div className="text-center py-16">
+            <div className="col-span-full text-center py-16">
               <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Gavel className="w-10 h-10 text-slate-500" />
               </div>
