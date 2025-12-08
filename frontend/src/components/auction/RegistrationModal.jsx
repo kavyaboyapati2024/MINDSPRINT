@@ -356,7 +356,7 @@ const RegistrationModal = ({
               {isRegistering ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Key generation in progress...
+                  Registartion in progress...
                 </>
               ) : (
                 <>
