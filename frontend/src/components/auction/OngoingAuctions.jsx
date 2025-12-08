@@ -38,11 +38,29 @@ const OngoingAuctions = () => {
           body: JSON.stringify({ userId: currentBidderId })
         });
         const data = await res.json();
-        setAuctions(data);
 
-        // Initialize timers
+        // Enrich auctions with canonical auctioner name when auctionerId available
+        const raw = Array.isArray(data) ? data : [];
+        const enriched = await Promise.all(raw.map(async (a) => {
+          // prefer server-provided auctionerId when present
+          const auctionerId = a.auctionerId || a.auctioner_id || a.auctionerId || null;
+          if (auctionerId) {
+            try {
+              const { getAuctionerName } = await import('../../services/auctionerService.js');
+              const name = await getAuctionerName(auctionerId);
+              return { ...a, auctioneerName: name || a.auctionerName || a.auctioneer || null };
+            } catch (err) {
+              return { ...a, auctioneerName: a.auctionerName || a.auctioneer || null };
+            }
+          }
+          return { ...a, auctioneerName: a.auctionerName || a.auctioneer || null };
+        }));
+
+        setAuctions(enriched);
+
+        // Initialize timers using enriched data
         const initialTimers = {};
-        data.forEach(auction => {
+        enriched.forEach(auction => {
           const end = new Date(auction.endDateTime).getTime();
           const now = Date.now();
           const diff = Math.max(0, end - now);

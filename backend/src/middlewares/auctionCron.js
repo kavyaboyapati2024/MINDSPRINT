@@ -44,6 +44,20 @@ cron.schedule("* * * * *", async () => {
     for (const auction of completedAuctions) {
       console.log("Generating report for:", auction._id);
 
+      // Safety: skip if a report already exists for this auction (prevents duplicates)
+      const existingReport = await AuctionReport.findOne({ auctionId: auction._id });
+      if (existingReport) {
+        console.log(`Report already exists for auction ${auction._id}, marking auction.reportGenerated = true`);
+        // Ensure auction has the flag set (persist it)
+        try {
+          auction.reportGenerated = true;
+          await auction.save();
+        } catch (err) {
+          console.warn('Failed to persist reportGenerated flag for auction', auction._id, err);
+        }
+        continue;
+      }
+
       const bids = await Bid.find({ auctionId: auction._id }).sort({
         amount: -1,
       });

@@ -21,6 +21,7 @@ const ViewAuctionModal = ({
   setSelectedAuction,
 }) => {
   const [auction, setAuction] = useState(null);
+  const [auctioneerName, setAuctioneerName] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,7 +34,28 @@ const ViewAuctionModal = ({
         const res = await axios.get(
           `http://localhost:9000/api/auctions/${auctionId}`
         );
-        setAuction(res.data);
+        const a = res.data;
+        setAuction(a);
+
+        // Resolve canonical auctioneer name via auctionerService when possible
+        try {
+          // derive id whether populated object or raw id
+          const raw = a?.auctionerId;
+          const auctionerId = raw && typeof raw === 'string' ? raw : raw?._id || null;
+          let name = a?.auctionerId?.name || null;
+          if (auctionerId) {
+            const { getAuctionerName } = await import('../../services/auctionerService.js');
+            try {
+              const fetched = await getAuctionerName(auctionerId);
+              if (fetched) name = fetched;
+            } catch (err) {
+              console.warn('Failed to fetch auctioner name for', auctionerId, err);
+            }
+          }
+          setAuctioneerName(name || null);
+        } catch (err) {
+          console.warn('Auctioneer name enrichment failed', err);
+        }
       } catch (err) {
         setError("Failed to load auction details.");
         console.error(err);
@@ -129,7 +151,7 @@ const ViewAuctionModal = ({
                     </span>
                   </div>
                   <p className="text-slate-300">
-                    {auction.auctionerId?.name || "Unknown"}
+                    {auctioneerName || auction.auctionerId?.name || "Unknown"}
                   </p>
                 </div>
 

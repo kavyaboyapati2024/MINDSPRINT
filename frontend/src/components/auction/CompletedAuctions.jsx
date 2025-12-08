@@ -16,7 +16,23 @@ const CompletedAuctions = () => {
         const response = await axios.get(
           "http://localhost:9000/api/auctions/past"
         );
-        setCompletedAuctions(response.data.past);
+        // Enrich completed auctions with canonical auctioner name when possible
+        const raw = Array.isArray(response.data.past) ? response.data.past : [];
+        const enriched = await Promise.all(raw.map(async (a) => {
+          const auctionerId = a.auctionerId || a.auctioner_id || a.auctionerId || null;
+          if (auctionerId) {
+            try {
+              const { getAuctionerName } = await import('../../services/auctionerService.js');
+              const name = await getAuctionerName(auctionerId);
+              return { ...a, auctioneer: name || a.auctioneer };
+            } catch (err) {
+              return { ...a };
+            }
+          }
+          return { ...a };
+        }));
+
+        setCompletedAuctions(enriched);
       } catch (err) {
         setError("Failed to load completed auctions.");
         console.error(err);
@@ -82,7 +98,7 @@ const CompletedAuctions = () => {
               {/* Auctioneer */}
               <div className="flex items-center gap-1 text-slate-400 text-sm">
                 <User className="w-3 h-3" />
-                {auction.auctioneer}
+                {auction.auctioneer || auction.auctionerName || auction.auctioneerName || 'Auctioneer'}
               </div>
 
               {/* Date */}

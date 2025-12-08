@@ -285,4 +285,31 @@ export const getAuctionerById = async (req, res) => {
   }
 };
 
+// Get auctioner display name by id (handles personal vs organization)
+export const getAuctionerName = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: 'auctioner id is required' });
+
+    const auctioner = await Auctioner.findById(id).select('accountType fullName organizationName contactPersonName email');
+    if (!auctioner) return res.status(404).json({ success: false, message: 'Auctioner not found' });
+
+    let name = 'Unknown';
+    const acct = auctioner.accountType;
+    if (acct === 'personal') {
+      name = auctioner.fullName || auctioner.email || 'Auctioneer';
+    } else if (acct === 'organization') {
+      // prefer organizationName, fall back to contact person
+      name = auctioner.organizationName || auctioner.contactPersonName || auctioner.email || 'Auctioneer';
+    } else {
+      name = auctioner.fullName || auctioner.organizationName || auctioner.contactPersonName || auctioner.email || 'Auctioneer';
+    }
+
+    return res.status(200).json({ success: true, auctionerId: id, accountType: acct || null, name });
+  } catch (error) {
+    console.error('getAuctionerName error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 
