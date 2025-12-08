@@ -18,7 +18,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:9000/api/auctions/report/${auctionId}`
+        `http://localhost:9000/api/auctionReport/report/${auctionId}`
       );
       
       if (!response.ok) {
@@ -39,7 +39,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
     setDownloading(true);
     try {
       const response = await fetch(
-        `http://localhost:9000/api/auctions/report/download/${auctionId}`
+        `http://localhost:9000/api/auctionReport/report/download/${auctionId}`
       );
 
       if (!response.ok) {

@@ -7,8 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export const Checkout = async (req, res) => {
   try {
     const { auction_id, user_id, auctioner_id, cost, title } = req.body;
-    console.log("Received cost for Stripe:", cost);
-    console.log("Incoming checkout request:", req.body);
+    // console.log("Received cost for Stripe:", cost);
+    // console.log("Incoming checkout request:", req.body);
 
     const registrationFee = Number(cost); // this is already 10% fee sent from frontend
     if (isNaN(registrationFee)) {

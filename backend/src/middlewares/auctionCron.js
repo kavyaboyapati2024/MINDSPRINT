@@ -4,7 +4,7 @@ import Bid from "../models/bidModel.js";
 import User from "../models/userModel.js";
 import AuctionReport from "../models/auctionReportModel.js";
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 * * * * *", async () => {
   try {
     const now = new Date();
 
@@ -21,7 +21,7 @@ cron.schedule("* * * * *", async () => {
     const updatedPastFromOngoing = await Auction.updateMany(
       {
         status: "ongoing",
-        endDateTime: { $lte: new Date(now - 60 * 60 * 1000) },
+        endDateTime: { $lte: now },
       },
       { $set: { status: "past" } }
     );
@@ -29,7 +29,7 @@ cron.schedule("* * * * *", async () => {
     const updatedPastFromUpcoming = await Auction.updateMany(
       {
         status: "upcoming",
-        endDateTime: { $lte: new Date(now - 60 * 60 * 1000) },
+        endDateTime: { $lte: now },
       },
       { $set: { status: "past" } }
     );
@@ -43,20 +43,6 @@ cron.schedule("* * * * *", async () => {
 
     for (const auction of completedAuctions) {
       console.log("Generating report for:", auction._id);
-
-      // Safety: skip if a report already exists for this auction (prevents duplicates)
-      const existingReport = await AuctionReport.findOne({ auctionId: auction._id });
-      if (existingReport) {
-        console.log(`Report already exists for auction ${auction._id}, marking auction.reportGenerated = true`);
-        // Ensure auction has the flag set (persist it)
-        try {
-          auction.reportGenerated = true;
-          await auction.save();
-        } catch (err) {
-          console.warn('Failed to persist reportGenerated flag for auction', auction._id, err);
-        }
-        continue;
-      }
 
       const bids = await Bid.find({ auctionId: auction._id }).sort({
         amount: -1,
@@ -110,11 +96,23 @@ cron.schedule("* * * * *", async () => {
         },
         finalStatus,
         finalPrice,
+        reportGenerated: true,
       });
 
-      // ✔ Stop duplicate reports
-      auction.reportGenerated = true;
-      await auction.save();
+      // ✔ Stop duplicate reports — use an atomic update to ensure persistence
+      try {
+        const upd = await Auction.updateOne(
+          { _id: auction._id },
+          { $set: { reportGenerated: true } }
+        );
+        if (upd.matchedCount === 0) {
+          console.warn("Failed to mark reportGenerated (no matching auction):", auction._id);
+        } else {
+          console.log("Marked auction.reportGenerated = true for:", auction._id);
+        }
+      } catch (uErr) {
+        console.error("Failed to set reportGenerated for auction", auction._id, uErr);
+      }
 
       console.log("Report generated for auction:", auction._id);
     }
