@@ -254,8 +254,31 @@ const AuctioneerDashboard = () => {
 
   const handleDeleteAuction = async (auctionId) => {
     if (!window.confirm('Are you sure you want to delete this auction?')) return;
-    const updatedAuctions = auctions.filter(a => a._id !== auctionId);
-    setAuctions(sortAuctions(updatedAuctions));
+    setIsLoading(true);
+    try {
+      const res = await fetch(`http://localhost:9000/api/auctions/auction/${auctionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Delete failed:', text);
+        setApiError(`Failed to delete auction: ${text || res.statusText}`);
+        return;
+      }
+
+      // remove from UI
+      const updatedAuctions = auctions.filter(a => a._id !== auctionId);
+      setAuctions(sortAuctions(updatedAuctions));
+    } catch (err) {
+      console.error('Network error deleting auction:', err);
+      setApiError('Network error while deleting auction');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCreateAuction = () => {
@@ -267,13 +290,62 @@ const AuctioneerDashboard = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    const updatedAuctions = auctions.map(a => 
-      a._id === editingAuction._id ? editingAuction : a
-    );
-    setAuctions(sortAuctions(updatedAuctions));
-    setIsEditModalOpen(false);
-    setEditingAuction(null);
+  const handleSaveEdit = async () => {
+    if (!editingAuction) return;
+    setIsLoading(true);
+    try {
+      const auctionId = editingAuction._id;
+      const payload = {
+        title: editingAuction.title,
+        description: editingAuction.description,
+        basePrice: editingAuction.basePrice,
+        startDateTime: editingAuction.startDateTime,
+        endDateTime: editingAuction.endDateTime,
+      };
+
+      const res = await fetch(`http://localhost:9000/api/auctions/auction/${auctionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Update failed:', text);
+        setApiError(`Failed to update auction: ${text || res.statusText}`);
+        return;
+      }
+
+      const json = await res.json();
+      const updatedAuctionRaw = json.auction || json;
+
+      // Normalize updated auction to keep imageUrl / imageBase64 shape consistent
+      const normalizedUpdated = {
+        _id: updatedAuctionRaw._id || auctionId,
+        title: updatedAuctionRaw.title || editingAuction.title,
+        description: updatedAuctionRaw.description || editingAuction.description || '',
+        basePrice: typeof updatedAuctionRaw.basePrice === 'number' ? updatedAuctionRaw.basePrice : Number(updatedAuctionRaw.basePrice) || editingAuction.basePrice || 0,
+        startDateTime: updatedAuctionRaw.startDateTime || updatedAuctionRaw.start || editingAuction.startDateTime || '',
+        endDateTime: updatedAuctionRaw.endDateTime || updatedAuctionRaw.end || editingAuction.endDateTime || '',
+        status: updatedAuctionRaw.status || editingAuction.status || 'upcoming',
+        // server may return the raw base64 in `file` or already normalized fields; prefer `file` then `imageBase64`, else keep existing
+        imageBase64: updatedAuctionRaw.file || updatedAuctionRaw.imageBase64 || editingAuction.imageBase64 || null,
+        imageUrl: updatedAuctionRaw.imageUrl || `http://localhost:9000/api/auctions/${updatedAuctionRaw._id || auctionId}/image`,
+      };
+
+      const updatedAuctions = auctions.map(a => a._id === (normalizedUpdated._id || auctionId) ? { ...a, ...normalizedUpdated } : a);
+      setAuctions(sortAuctions(updatedAuctions));
+      setIsEditModalOpen(false);
+      setEditingAuction(null);
+    } catch (err) {
+      console.error('Network error updating auction:', err);
+      setApiError('Network error while updating auction');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleViewAuction = (auction) => {

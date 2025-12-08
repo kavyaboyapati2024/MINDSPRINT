@@ -147,7 +147,7 @@ export const getUpcomingAuctions = async (req, res) => {
   try {
     const upcomingAuctions = await Auction.find({
       status: "upcoming",
-    }).populate("auctionerId", "name");
+    }).populate("auctionerId", "accountType fullName organizationName contactPersonName email");
 
     const formatted = upcomingAuctions.map((auction) => {
       const startDate = new Date(auction.startDateTime);
@@ -172,11 +172,16 @@ export const getUpcomingAuctions = async (req, res) => {
         { hour: "2-digit", minute: "2-digit" }
       )}`;
 
+      const auctioneerName = auction.auctionerId?.fullName || "Unknown";
       return {
         _id: auction._id,
         title: auction.title,
-        auctioneer: auction.auctionerId?.name || "Unknown", // name
-        auctionerId: auction.auctionerId?._id || null, // separate id
+        // keep legacy field used by some clients
+        auctioneer: auctioneerName,
+        // normalized names (both spellings to be safe)
+        auctionerName: auctioneerName,
+        auctioneerName: auctioneerName,
+        auctionerId: auction.auctionerId?._id || null,
         startTime,
         endTime,
         baseAmount: auction.basePrice || 0,
@@ -192,7 +197,22 @@ export const getUpcomingAuctions = async (req, res) => {
 // Get Ongoing Auctions
 export const getOngoingAuctions = async (req, res) => {
   try {
-    const ongoing = await Auction.find({ status: "ongoing" });
+    // populate auctioner name so clients can display it
+    const ongoingDocs = await Auction.find({ status: "ongoing" }).populate("auctionerId", "accountType fullName organizationName contactPersonName email").lean();
+
+    const ongoing = ongoingDocs.map(a => ({
+      _id: a._id,
+      title: a.title,
+      startDateTime: a.startDateTime,
+      endDateTime: a.endDateTime,
+      basePrice: a.basePrice,
+      auctioneer: a.auctionerId?.fullName || a.auctionerId?.organizationName || 'Unknown',
+      auctionerName: a.auctionerId?.fullName || a.auctionerId?.organizationName || 'Unknown',
+      auctioneerName: a.auctionerId?.fullName || a.auctionerId?.organizationName || 'Unknown',
+      auctionerId: a.auctionerId?._id || null,
+      status: a.status || 'ongoing',
+    }));
+
     return res.status(200).json({ ongoing });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -205,20 +225,26 @@ export const getPastAuctions = async (req, res) => {
     // Find past auctions and populate auctioner name
     const pastAuctions = await Auction.find({ status: "past" }).populate(
       "auctionerId",
-      "name"
+      "accountType fullName organizationName contactPersonName email"
     );
 
     // Example winning bids array (randomized)
     const winningBids = ["₹180000", "₹200000", "₹220000", "₹250000", "₹300000"];
 
     // Format response
-    const formatted = pastAuctions.map((auction, index) => ({
-      _id: auction._id,
-      title: auction.title,
-      auctioneer: auction.auctionerId?.name || "Unknown",
-      completionDate: auction.endDateTime.toISOString().split("T")[0],
-      winningBid: winningBids[index % winningBids.length], // cycle through array
-    }));
+    const formatted = pastAuctions.map((auction, index) => {
+      const name = auction.auctionerId?.name || 'Unknown';
+      return {
+        _id: auction._id,
+        title: auction.title,
+        auctioneer: name,
+        auctionerName: name,
+        auctioneerName: name,
+        auctionerId: auction.auctionerId?._id || null,
+        completionDate: auction.endDateTime.toISOString().split("T")[0],
+        winningBid: winningBids[index % winningBids.length], // cycle through array
+      };
+    });
 
     res.json({ past: formatted });
   } catch (error) {
@@ -329,7 +355,7 @@ export const getOngoingAuctionsById = async (req, res) => {
 
     // Fetch auctions and populate auctioner name
     const auctions = await Auction.find({ status: "ongoing"}, "auctionerId title endDateTime")
-      .populate("auctionerId", "name");
+      .populate("auctionerId", "accountType fullName organizationName contactPersonName email");
 
     // For each auction, check if user is registered
     const formattedAuctions = await Promise.all(
@@ -339,11 +365,16 @@ export const getOngoingAuctionsById = async (req, res) => {
           userId,
         });
 
+        // derive a sensible display name from populated auctioner
+        const populated = auction.auctionerId || {};
+        const name = populated.fullName || populated.organizationName || populated.contactPersonName || populated.email || null;
+
         return {
           _id: auction._id,
           title: auction.title,
           endDateTime: auction.endDateTime,
-          auctionerName: auction.auctionerId.name,
+          auctionerName: name,
+          auctionerId: populated._id || null,
           isRegistered: !!registration, // true if registration exists, else false
         };
       })
@@ -363,7 +394,7 @@ export const getAuctionById = async (req, res) => {
     // populate only existing fields on Auctioner (here: name)
     const auction = await Auction.findById(id)
       .select("-file") 
-      .populate("auctionerId", "name")
+      .populate("auctionerId", "accountType fullName organizationName contactPersonName email")
       .lean();
 
     if (!auction) return res.status(404).json({ error: "Auction not found" });
@@ -409,7 +440,7 @@ export const getAuctionsByBidderId = async (req, res) => {
     // Fetch auctions and populate auctioner name, exclude file to keep response small
     let auctions = await Auction.find({ _id: { $in: auctionIds } })
       .select('-file')
-      .populate('auctionerId', 'name')
+      .populate('auctionerId', 'accountType fullName organizationName contactPersonName email')
       .lean();
 
     // Add image URL and include base64 image data directly in JSON
@@ -440,7 +471,7 @@ export const getAuctionsByAuctionerId = async (req, res) => {
 
     let auctions = await Auction.find({ auctionerId })
       .select('-file')
-      .populate('auctionerId', 'name')
+      .populate('auctionerId', 'accountType fullName organizationName contactPersonName email')
       .lean();
 
     auctions = auctions.map((a) => {

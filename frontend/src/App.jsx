@@ -35,6 +35,7 @@ function App() {
       <Route path="/forgot-password/user" element={<ForgotPassword />} />
       <Route path="/home" element={<AuctionHomepage />} />
       <Route path="/live" element={<LiveAuction/>}/>
+      <Route path="/live/:auctionId" element={<LiveAuction/>}/>
       <Route path="/about" element={<AboutUs/>}/>
       <Route path="/Faqs" element={<Faqs/>}/>
       <Route path="/view-auction" element={<ViewLiveAuction/>}/>
