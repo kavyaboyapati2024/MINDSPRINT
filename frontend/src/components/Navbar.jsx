@@ -106,7 +106,7 @@ const Navbar = () => {
           setUserData(null);
           
           // Redirect to signin page
-          navigate('/signin/user');
+          navigate('/');
           
         } else {
           console.error('Logout failed:', result);
