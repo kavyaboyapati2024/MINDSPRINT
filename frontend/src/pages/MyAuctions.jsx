@@ -65,7 +65,7 @@ const MyAuctions = () => {
   };
 
   const handleJoinAuction = (auctionId) => {
-    window.location.href = '/live-auction';
+    window.location.href = '/live';
   };
 
   const renderOngoingAuction = (auction) => (
