@@ -1,63 +1,131 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Filter, Search, Calendar, Clock, Gavel, PlayCircle } from 'lucide-react';
+import AuthService from '../services/authServices';
 
 const MyAuctions = () => {
   const [activeTab, setActiveTab] = useState('ongoing');
   const [searchTerm, setSearchTerm] = useState('');
+  const [auctions, setAuctions] = useState({ ongoing: [], upcoming: [], past: [] });
+  const [loading, setLoading] = useState(true);
 
-  // Mock auction data with actual image URLs
-  const auctions = {
-    ongoing: [
-      {
-        id: 1,
-        title: 'Vintage Rolex Submariner Watch',
-        image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&h=300&fit=crop',
-        startingBid: 120000,
-        timeLeft: '2h 30m',
-        status: 'active',
-        hasParticipated: true
-      },
-      {
-        id: 2,
-        title: 'Classic BMW Motorcycle 1970',
-        image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&h=300&fit=crop',
-        startingBid: 250000,
-        timeLeft: '1d 5h',
-        status: 'active',
-        hasParticipated: true
-      },
-      {
-        id: 3,
-        title: 'Antique Persian Carpet',
-        image: 'https://images.unsplash.com/photo-1600166898405-da9535204843?w=400&h=300&fit=crop',
-        startingBid: 60000,
-        timeLeft: '4h 15m',
-        status: 'active',
-        hasParticipated: false
-      }
-    ],
-    upcoming: [
-      {
-        id: 4,
-        title: 'Original Pablo Picasso Sketch',
-        image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop',
-        startingBid: 350000,
-        startTime: '2024-12-20 10:00 AM',
-        status: 'scheduled'
-      },
-      {
-        id: 5,
-        title: 'Rare Diamond Necklace',
-        image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
-        startingBid: 550000,
-        startTime: '2024-12-22 2:00 PM',
-        status: 'scheduled'
-      }
-    ]
+  // Helper: pretty time-left string
+  const formatTimeLeft = (end) => {
+    try {
+      const now = new Date();
+      const endDt = new Date(end);
+      const diffMs = endDt - now;
+      if (diffMs <= 0) return 'Ended';
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHrs = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+      const diffMins = Math.floor((diffMs / (1000 * 60)) % 60);
+      if (diffDays > 0) return `${diffDays}d ${diffHrs}h`;
+      if (diffHrs > 0) return `${diffHrs}h ${diffMins}m`;
+      return `${diffMins}m`;
+    } catch (e) {
+      return '';
+    }
   };
 
-  const filteredAuctions = auctions[activeTab].filter(auction =>
-    auction.title.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchMyAuctions = async () => {
+      setLoading(true);
+      const user = AuthService.getCurrentUser();
+      try {
+        let resJson = { auctions: [] };
+        if (user && user._id) {
+          const res = await fetch(`http://localhost:9000/api/auctions/by-bidder/${user._id}`);
+          if (res.ok) resJson = await res.json();
+        }
+
+        // normalize auctions array from { auctions: [...] }
+        const auctionsFromApi = Array.isArray(resJson) ? resJson : (resJson && resJson.auctions) ? resJson.auctions : [];
+
+        // If not logged in or endpoint returned nothing, fallback to public endpoints
+        if (!auctionsFromApi || (Array.isArray(auctionsFromApi) && auctionsFromApi.length === 0)) {
+          const [ongoingRes, upcomingRes] = await Promise.all([
+            fetch('http://localhost:9000/api/auctions/ongoing'),
+            fetch('http://localhost:9000/api/auctions/upcoming')
+          ]);
+          const ongoingJson = ongoingRes.ok ? await ongoingRes.json() : [];
+          const upcomingJson = upcomingRes.ok ? await upcomingRes.json() : [];
+
+          // backend returns { ongoing: [...] } and { upcoming: [...] }
+          const ongoingArr = Array.isArray(ongoingJson) ? ongoingJson : (ongoingJson && Array.isArray(ongoingJson.ongoing) ? ongoingJson.ongoing : []);
+          const upcomingArr = Array.isArray(upcomingJson) ? upcomingJson : (upcomingJson && Array.isArray(upcomingJson.upcoming) ? upcomingJson.upcoming : []);
+
+          if (!mounted) return;
+          setAuctions({
+            ongoing: (ongoingArr || []).map((a) => ({
+              id: a._id || a.id,
+              title: a.title || a.name || a.item?.title,
+              image: a.imageUrl || `http://localhost:9000/api/auctions/${a._id || a.id}/image`,
+              startingBid: a.basePrice || a.startingBid || 0,
+              timeLeft: formatTimeLeft(a.endDateTime || a.endAt || a.end),
+              status: 'ongoing',
+              hasParticipated: false
+            })),
+            upcoming: (upcomingArr || []).map((a) => ({
+              id: a._id || a.id,
+              title: a.title || a.name || a.item?.title,
+              image: a.imageUrl || `http://localhost:9000/api/auctions/${a._id || a.id}/image`,
+              startingBid: a.basePrice || a.startingBid || 0,
+              startTime: a.startDateTime || a.startAt || a.start,
+              status: 'upcoming'
+            })),
+            past: []
+          });
+          setLoading(false);
+          return;
+        }
+
+        // If we got bidder-specific auctions, split into ongoing/upcoming/past
+        const now = new Date();
+        const ongoing = [];
+        const upcoming = [];
+        const past = [];
+        (auctionsFromApi || []).forEach((a) => {
+          const start = a.startDateTime ? new Date(a.startDateTime) : a.start ? new Date(a.start) : null;
+          const end = a.endDateTime ? new Date(a.endDateTime) : a.end ? new Date(a.end) : null;
+
+          // prefer server-provided status when available
+          const statusFromServer = (a.status || '').toString().toLowerCase();
+          const status = statusFromServer;
+
+          const mapped = {
+            id: a._id || a.id,
+            title: a.title || a.name || a.item?.title,
+            image: a.imageUrl || `http://localhost:9000/api/auctions/${a._id || a.id}/image`,
+            startingBid: a.basePrice || a.startingBid || 0,
+            timeLeft: end ? formatTimeLeft(end) : '',
+            startTime: start ? start.toLocaleString() : null,
+            endDateTime: end ? end.toLocaleString() : null,
+            status,
+            hasParticipated: true
+          };
+
+          if (status === 'past') past.push(mapped);
+          else if (status === 'upcoming') upcoming.push(mapped);
+          else ongoing.push(mapped);
+        });
+
+        if (!mounted) return;
+        setAuctions({ ongoing, upcoming, past });
+      } catch (error) {
+        console.error('Error fetching auctions:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchMyAuctions();
+
+    return () => { mounted = false; };
+  }, []);
+
+  const filteredAuctions = (auctions[activeTab] || []).filter(auction =>
+    (auction.title || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleNavigateHome = () => {
@@ -65,7 +133,7 @@ const MyAuctions = () => {
   };
 
   const handleJoinAuction = (auctionId) => {
-    window.location.href = '/live';
+    window.location.href = `/live/${auctionId}`;
   };
 
   const renderOngoingAuction = (auction) => (
@@ -156,6 +224,52 @@ const MyAuctions = () => {
     </div>
   );
 
+  const renderPastAuction = (auction) => (
+    <div key={auction.id} className="bg-slate-900/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-slate-700/30 hover:border-slate-600/50 transition-all">
+      {/* Image Section */}
+      <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-800">
+        <img 
+          src={auction.image} 
+          alt={auction.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        />
+        <div className="absolute top-3 right-3 bg-slate-600/90 backdrop-blur-sm px-3 py-1 rounded-full">
+          <span className="text-white text-xs font-semibold">COMPLETED</span>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-4">
+        <div className="mb-3">
+          <h3 className="text-white font-semibold text-base md:text-lg mb-2">{auction.title}</h3>
+          <div className="text-sm text-slate-400">
+            <span>Completed auction</span>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-slate-400 text-xs mb-1">Base Amount</p>
+          <p className="text-white font-bold text-lg md:text-xl">₹{(auction.startingBid || 0).toLocaleString('en-IN')}</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
+          <div className="flex flex-col text-slate-400 text-sm space-y-2">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4" />
+              <span>{auction.startTime} - {auction.endDateTime}</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => window.location.href = `/live/${auction.id}`}
+            className="w-full sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
       {/* Header */}
@@ -196,10 +310,11 @@ const MyAuctions = () => {
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Tabs */}
-        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1 bg-slate-800/50 rounded-xl p-1 mb-6 sm:mb-8 max-w-full sm:max-w-lg overflow-x-auto">
+        <div className="flex space-x-1 bg-slate-800/50 rounded-xl p-1 mb-6 sm:mb-8 max-w-full overflow-x-auto">
           {[
             { id: 'ongoing', label: 'Ongoing', icon: PlayCircle, count: auctions.ongoing.length },
-            { id: 'upcoming', label: 'Upcoming', icon: Calendar, count: auctions.upcoming.length }
+            { id: 'upcoming', label: 'Upcoming', icon: Calendar, count: auctions.upcoming.length },
+            { id: 'past', label: 'Completed', icon: Gavel, count: auctions.past.length }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -223,6 +338,7 @@ const MyAuctions = () => {
             <>
               {activeTab === 'ongoing' && filteredAuctions.map(renderOngoingAuction)}
               {activeTab === 'upcoming' && filteredAuctions.map(renderUpcomingAuction)}
+              {activeTab === 'past' && filteredAuctions.map(renderPastAuction)}
             </>
           ) : (
             <div className="col-span-full text-center py-16">

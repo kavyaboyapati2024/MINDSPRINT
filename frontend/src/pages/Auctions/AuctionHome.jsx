@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, CheckCircle } from "lucide-react";
+import { TrendingUp, CheckCircle, Eye, X, Download } from "lucide-react";
 
 // Import separate components
 import Navbar from "../../components/Navbar";
 import OngoingAuctions from "../../components/auction/OngoingAuctions";
 import UpcomingAuctions from "../../components/auction/UpcomingAuctions";
 import CompletedAuctions from "../../components/auction/CompletedAuctions";
+import AuctionReportModal from "../../components/auction/AuctionReportModal";
 
 const AuctionHomepage = () => {
   // Get user from state instead of localStorage
@@ -15,6 +16,13 @@ const AuctionHomepage = () => {
   const [registeredAuctions, setRegisteredAuctions] = useState(new Set());
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Modal states for completed auctions
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportAuctionId, setReportAuctionId] = useState(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const [registrationData, setRegistrationData] = useState({
     name: "",
@@ -176,6 +184,47 @@ const AuctionHomepage = () => {
     });
   };
 
+  // Handlers for completed auction modals
+  const handleViewReport = (auctionId) => {
+    setReportAuctionId(auctionId);
+    setIsReportModalOpen(true);
+  };
+
+  const handleDownloadReport = async (auctionId) => {
+    setPdfLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:9000/api/auctionReport/report/download/${auctionId}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setReportAuctionId(auctionId);
+      setIsPdfModalOpen(true);
+    } catch (err) {
+      console.error('Error downloading report:', err);
+      alert('Failed to load PDF report');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `auction_report_${reportAuctionId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Navbar */}
@@ -291,7 +340,12 @@ const AuctionHomepage = () => {
         )}
 
         {/* Completed Auctions */}
-        {activeTab === "completed" && <CompletedAuctions />}
+        {activeTab === "completed" && (
+          <CompletedAuctions 
+            onViewReport={handleViewReport}
+            onDownloadReport={handleDownloadReport}
+          />
+        )}
       </div>
 
       {/* Registration Modal */}
@@ -421,6 +475,69 @@ const AuctionHomepage = () => {
             <span className="font-semibold">
               Successfully registered for the auction!
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Auction Report Modal */}
+      <AuctionReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        auctionId={reportAuctionId}
+      />
+
+      {/* PDF Modal */}
+      {isPdfModalOpen && pdfUrl && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-5xl max-h-[90vh] bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-sky-500 to-indigo-600 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Auction Report PDF</h2>
+              <button
+                onClick={() => {
+                  setIsPdfModalOpen(false);
+                  setPdfUrl(null);
+                }}
+                className="text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-200"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* PDF Viewer */}
+            <div className="overflow-auto max-h-[calc(90vh-140px)] bg-slate-900">
+              <iframe
+                src={pdfUrl + '#toolbar=0&navpanes=0&scrollbar=1'}
+                className="w-full h-full min-h-[500px] block"
+                title="Auction Report PDF"
+                style={{ border: 'none' }}
+              />
+            </div>
+
+            {/* Footer with Download Button */}
+            <div className="bg-slate-900/50 px-6 py-4 border-t border-slate-700/50 flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setIsPdfModalOpen(false);
+                  setPdfUrl(null);
+                }}
+                className="px-6 py-3 rounded-lg font-semibold bg-slate-700/50 border border-slate-600/50 hover:bg-slate-700 hover:border-slate-500 text-white transition-all duration-300"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleDownloadPdf}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold 
+                  bg-gradient-to-r from-sky-500 to-indigo-600 
+                  hover:from-sky-600 hover:to-indigo-700 
+                  text-white transition-all duration-300 
+                  hover:scale-105 hover:shadow-lg hover:shadow-sky-500/30
+                  shadow-lg shadow-sky-500/20"
+              >
+                <Download className="w-5 h-5" />
+                Download PDF
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,9 +17,6 @@ const AuctioneerDashboard = () => {
   const [auctioneerName, setAuctioneerName] = useState('');
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportAuctionId, setReportAuctionId] = useState(null);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Dummy data with proper image URLs
   const dummyAuctions = [
@@ -370,7 +367,7 @@ const AuctioneerDashboard = () => {
     localStorage.removeItem('auctioneerId');
     localStorage.removeItem('auctioneer_id');
     // Navigate to signin page
-    navigate("/");
+    navigate("/signin/auctioneer");
   };
 
   const getStatusBadge = (status) => {
@@ -395,40 +392,6 @@ const AuctioneerDashboard = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const handleDownloadReport = async (auctionId) => {
-    setPdfLoading(true);
-    try {
-      const response = await fetch(
-        `http://localhost:9000/api/auctionReport/report/download/${auctionId}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch PDF');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      setPdfUrl(url);
-      setIsPdfModalOpen(true);
-    } catch (err) {
-      console.error('Error downloading report:', err);
-      setApiError('Failed to load PDF report');
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
-  const handleDownloadPdf = () => {
-    if (pdfUrl) {
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = `auction_report_${reportAuctionId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
   };
 
   return (
@@ -698,25 +661,14 @@ const AuctioneerDashboard = () => {
                         
                         {/* Completed - Download Report */}
                         {auction.status === 'past' && (
-                          <>
-                            <button
-                              onClick={() => { setReportAuctionId(auction._id); setIsReportOpen(true); }}
-                              className="flex items-center justify-center gap-2 w-36 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all font-medium shadow-lg shadow-emerald-500/20 text-sm"
-                              title="View Report"
-                            >
-                              <Eye size={16} />
-                              <span>View</span>
-                            </button>
-                            <button
-                              onClick={() => handleDownloadReport(auction._id)}
-                              disabled={pdfLoading}
-                              className="flex items-center justify-center gap-2 w-36 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-all font-medium shadow-lg shadow-violet-500/20 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Download Report"
-                            >
-                              <Download size={16} />
-                              <span>{pdfLoading ? 'Loading...' : 'Download'}</span>
-                            </button>
-                          </>
+                          <button
+                            onClick={() => { setReportAuctionId(auction._id); setIsReportOpen(true); }}
+                            className="flex items-center justify-center gap-2 w-36 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all font-medium shadow-lg shadow-emerald-500/20 text-sm"
+                            title="View Report"
+                          >
+                            <Download size={16} />
+                            <span>Report</span>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -863,62 +815,6 @@ const AuctioneerDashboard = () => {
         onClose={() => { setIsReportOpen(false); setReportAuctionId(null); }}
         auctionId={reportAuctionId}
       />
-
-      {/* PDF Viewer Modal */}
-      {isPdfModalOpen && pdfUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-5xl max-h-[90vh] bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-sky-500 to-indigo-600 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Auction Report PDF</h2>
-              <button
-                onClick={() => {
-                  setIsPdfModalOpen(false);
-                  setPdfUrl(null);
-                }}
-                className="text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-200"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* PDF Viewer */}
-            <div className="overflow-auto max-h-[calc(90vh-140px)] bg-slate-900">
-              <iframe
-                src={pdfUrl + '#toolbar=0&navpanes=0&scrollbar=1'}
-                className="w-full h-full min-h-[500px] block"
-                title="Auction Report PDF"
-                style={{ border: 'none' }}
-              />
-            </div>
-
-            {/* Footer with Download Button */}
-            <div className="bg-slate-900/50 px-6 py-4 border-t border-slate-700/50 flex justify-end gap-4">
-              <button
-                onClick={() => {
-                  setIsPdfModalOpen(false);
-                  setPdfUrl(null);
-                }}
-                className="px-6 py-3 rounded-lg font-semibold bg-slate-700/50 border border-slate-600/50 hover:bg-slate-700 hover:border-slate-500 text-white transition-all duration-300"
-              >
-                Close
-              </button>
-              <button
-                onClick={handleDownloadPdf}
-                className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold 
-                  bg-gradient-to-r from-sky-500 to-indigo-600 
-                  hover:from-sky-600 hover:to-indigo-700 
-                  text-white transition-all duration-300 
-                  hover:scale-105 hover:shadow-lg hover:shadow-sky-500/30
-                  shadow-lg shadow-sky-500/20"
-              >
-                <Download className="w-5 h-5" />
-                Download PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
