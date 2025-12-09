@@ -238,25 +238,6 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
             </div>
           )}
         </div>
-
-        {/* Footer with Download Button */}
-        {!loading && !error && report && (
-          <div className="bg-slate-900 px-6 py-4 border-t border-slate-700 flex justify-end">
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold 
-                bg-gradient-to-r from-emerald-500 to-emerald-600 
-                hover:from-emerald-600 hover:to-emerald-700 
-                text-white transition-all duration-300 
-                hover:scale-105 hover:shadow-lg
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              <Download className="w-5 h-5" />
-              {downloading ? "Downloading..." : "Download PDF Report"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

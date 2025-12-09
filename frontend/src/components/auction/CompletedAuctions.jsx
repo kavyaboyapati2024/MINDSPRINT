@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { User, Calendar, Download } from "lucide-react";
+import { User, Calendar, Download, Eye } from "lucide-react";
 import axios from "axios";
-import AuctionReportModal from "./AuctionReportModal";
 
-const CompletedAuctions = () => {
+const CompletedAuctions = ({ 
+  onViewReport, 
+  onDownloadReport 
+}) => {
   const [completedAuctions, setCompletedAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedAuctionId, setSelectedAuctionId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCompletedAuctions = async () => {
@@ -44,18 +44,33 @@ const CompletedAuctions = () => {
     fetchCompletedAuctions();
   }, []);
 
-  const ActionButton = ({ onClick }) => (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs 
-        bg-gradient-to-r from-indigo-500 to-indigo-600 
-        hover:from-indigo-600 hover:to-indigo-700 
-        text-white transition-all duration-300 
-        hover:scale-105 hover:shadow-lg"
-    >
-      <Download className="w-3 h-3" />
-      Report
-    </button>
+  const ActionButtons = ({ auctionId }) => (
+    <div className="flex gap-2">
+      <button
+        onClick={() => onViewReport(auctionId)}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs 
+          bg-gradient-to-r from-emerald-500 to-emerald-600 
+          hover:from-emerald-600 hover:to-emerald-700 
+          text-white transition-all duration-300 
+          hover:scale-105 hover:shadow-lg"
+        title="View Report"
+      >
+        <Eye className="w-3 h-3" />
+        View
+      </button>
+      <button
+        onClick={() => onDownloadReport(auctionId)}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs 
+          bg-gradient-to-r from-indigo-500 to-indigo-600 
+          hover:from-indigo-600 hover:to-indigo-700 
+          text-white transition-all duration-300 
+          hover:scale-105 hover:shadow-lg"
+        title="Download Report"
+      >
+        <Download className="w-3 h-3" />
+        Download
+      </button>
+    </div>
   );
 
   if (loading)
@@ -114,12 +129,7 @@ const CompletedAuctions = () => {
 
               {/* Action */}
               <div>
-                <ActionButton
-                  onClick={() => {
-                    setSelectedAuctionId(auction._id); // or whatever the ID field is
-                    setIsModalOpen(true);
-                  }}
-                />
+                <ActionButtons auctionId={auction._id} />
               </div>
             </div>
           </div>
@@ -129,11 +139,6 @@ const CompletedAuctions = () => {
           No completed auctions found.
         </p>
       )}
-      <AuctionReportModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        auctionId={selectedAuctionId}
-      />
     </div>
   );
 };
