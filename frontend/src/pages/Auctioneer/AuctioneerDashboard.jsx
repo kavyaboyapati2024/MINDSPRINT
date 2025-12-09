@@ -364,7 +364,7 @@ const AuctioneerDashboard = () => {
     localStorage.removeItem('auctioneerId');
     localStorage.removeItem('auctioneer_id');
     // Navigate to signin page
-    navigate("/signin/auctioneer");
+    navigate("/");
   };
 
   const getStatusBadge = (status) => {
