@@ -6,7 +6,7 @@ export const registerAuction = async (req, res) => {
   try {
     const { auctionId, userId, name, email, phone, address, key, auctionerId } =
       req.body;
-    console.log("Incoming registration body:", req.body);
+    // console.log("Incoming registration body:", req.body);
     // Validate required fields
     if (
       !auctionerId ||

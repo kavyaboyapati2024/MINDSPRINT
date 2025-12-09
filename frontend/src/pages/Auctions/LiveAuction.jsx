@@ -5,7 +5,6 @@ import {
   Shield,
   Lock,
   Eye,
-  IndianRupee,
   Timer,
   Gavel,
   Trophy,
@@ -17,40 +16,79 @@ import { useParams } from "react-router-dom";
 import { encrypt } from "../../services/encryption.js";
 
 const LiveAuction = () => {
-  const { auctionId } = useParams(); // store auction_id from URL
+  const { auctionId } = useParams();
+
+  // UI state
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [bidders, setBidders] = useState([]);
+  const [winner, setWinner] = useState(null);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [bidAmount, setBidAmount] = useState("");
+  const [auctionEnded, setAuctionEnded] = useState(false);
 
   const [endTime, setEndTime] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState({
     hours: 0,
     minutes: 0,
-    seconds: 10,
+    seconds: 0,
   });
-  const [bidAmount, setBidAmount] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [auctionEnded, setAuctionEnded] = useState(false);
-  const [showWinnerModal, setShowWinnerModal] = useState(false);
-  const [winner, setWinner] = useState(null);
-  const [bidders, setBidders] = useState([]);
 
   const [currentBidderId, setCurrentBidderId] = useState(null);
   useEffect(() => {
     const fetchCurrentBidder = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:9000/api/bids/get-bidder-id",
-          {
-            method: "GET",
-            credentials: "include", // include cookies if JWT is stored there
+        // Prefer client-side stored user data to avoid an extra network call
+        try {
+          const sessionUser = sessionStorage.getItem("user") || sessionStorage.getItem("auctioneerData");
+          if (sessionUser) {
+            const parsed = JSON.parse(sessionUser);
+            const id = parsed?._id || parsed?.id || parsed?.userId;
+            if (id) {
+              setCurrentBidderId(id);
+              console.log("Current logged-in bidder ID (from sessionStorage):", id);
+              return;
+            }
           }
-        );
+        } catch (sErr) {
+          console.warn("Failed to read sessionStorage for current user", sErr);
+        }
+
+        try {
+          const localUser = localStorage.getItem("user") || localStorage.getItem("auctioneerData") || localStorage.getItem("auctioneerId");
+          if (localUser) {
+            // If localUser is a plain id string (auctioneerId), use it directly
+            try {
+              const parsedLocal = JSON.parse(localUser);
+              const id = parsedLocal?._id || parsedLocal?.id || parsedLocal?.userId;
+              if (id) {
+                setCurrentBidderId(id);
+                console.log("Current logged-in bidder ID (from localStorage):", id);
+                return;
+              }
+            } catch (e) {
+              // Not JSON — treat as raw id
+              setCurrentBidderId(localUser);
+              console.log("Current logged-in bidder ID (from localStorage raw):", localUser);
+              return;
+            }
+          }
+        } catch (lErr) {
+          console.warn("Failed to read localStorage for current user", lErr);
+        }
+
+        // Fallback to API call
+        const res = await fetch("http://localhost:9000/api/auth/current-user", {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!res.ok) {
           throw new Error("Failed to fetch current bidder");
         }
 
         const data = await res.json();
-        console.log("Current logged-in bidder ID:", data.userId);
+        console.log("Current logged-in bidder ID (from API):", data.userId);
         setCurrentBidderId(data.userId);
       } catch (err) {
         console.error("Error fetching current bidder:", err);
@@ -242,6 +280,9 @@ const LiveAuction = () => {
 
   const [auctionImage, setAuctionImage] = useState(null);
 
+  // Minimum allowed bid calculated from startingBid (10%)
+  const minAllowed = Math.ceil(startingBid ? startingBid * 0.1 : 0);
+
   useEffect(() => {
     if (!auctionId) return;
 
@@ -269,6 +310,7 @@ const LiveAuction = () => {
   }, [auctionId]);
 
   const [privateKey, setPrivateKey] = useState(null);
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
 
   useEffect(() => {
     if (!auctionId || !currentBidderId) return;
@@ -316,27 +358,46 @@ const LiveAuction = () => {
   // Timer countdown effect
 
   const handleSubmitBid = () => {
-    if (
-      bidAmount &&
-      parseFloat(bidAmount) > 0 &&
-      !auctionEnded &&
-      !hasSubmittedBid
-    ) {
-      setShowConfirmation(true);
+    const amount = parseFloat(bidAmount);
+
+    if (auctionEnded) {
+      alert('Auction has ended. You cannot place a bid.');
+      return;
     }
+    if (hasSubmittedBid) {
+      alert('You have already submitted a bid for this auction.');
+      return;
+    }
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid bid amount greater than 0.');
+      return;
+    }
+    if (minAllowed > 0 && amount < minAllowed) {
+      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')} (10% of starting bid).`);
+      return;
+    }
+
+    setShowConfirmation(true);
   };
 
   const confirmBid = async () => {
     if (!privateKey) {
       console.warn("Private key not loaded yet!");
+      alert('Private key not ready. Try again in a moment.');
       return;
     }
 
-    if (!bidAmount || parseFloat(bidAmount) <= 0) {
-      console.warn("Invalid bid amount!");
+    const amount = parseFloat(bidAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Invalid bid amount.');
+      return;
+    }
+    if (minAllowed > 0 && amount < minAllowed) {
+      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')} (10% of starting bid).`);
       return;
     }
 
+    setIsPlacingBid(true);
     try {
       // Encrypt the bid
       const encryptedBid = await encrypt(privateKey, bidAmount.toString());
@@ -391,6 +452,9 @@ const LiveAuction = () => {
     } catch (err) {
       console.error("Error encrypting or placing bid:", err);
       alert("Failed to submit bid. Try again.");
+    }
+    finally {
+      setIsPlacingBid(false);
     }
   };
 
@@ -621,7 +685,7 @@ const LiveAuction = () => {
                     Bid Amount (INR)
                   </label>
                   <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">₹</span>
                     <input
                       type="number"
                       value={bidAmount}
@@ -643,19 +707,19 @@ const LiveAuction = () => {
                           ? "You have already submitted your bid"
                           : "Enter your bid amount"
                       }
-                      min="100000"
+                      min={minAllowed}
                       step="0.01"
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {auctionEnded
-                      ? "No more bids accepted"
-                      : !isRegistered
-                      ? "Please register to place bids"
-                      : hasSubmittedBid
-                      ? "You can only submit one bid per auction"
-                      : "Minimum bid: ₹1,00,000.00"}
-                  </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {auctionEnded
+                        ? "No more bids accepted"
+                        : !isRegistered
+                        ? "Please register to place bids"
+                        : hasSubmittedBid
+                        ? "You can only submit one bid per auction"
+                        : `Minimum bid: ₹${minAllowed.toLocaleString("en-IN")}`}
+                    </p>
                 </div>
 
                 {/* Bid Info Box */}
@@ -715,7 +779,7 @@ const LiveAuction = () => {
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmitBid}
-                  disabled={auctionEnded || !isRegistered || hasSubmittedBid}
+                  disabled={auctionEnded || !isRegistered || hasSubmittedBid || isPlacingBid}
                   className={`w-full font-bold py-4 px-6 rounded-xl transition-all duration-300 ${
                     auctionEnded || !isRegistered || hasSubmittedBid
                       ? "bg-slate-700 text-slate-400 cursor-not-allowed"
@@ -958,11 +1022,18 @@ const LiveAuction = () => {
                 </button>
                 <button
                   onClick={confirmBid}
-                  className="flex-1 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-400 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(14,165,233,0.4)] hover:shadow-[0_0_30px_rgba(14,165,233,0.6)]"
+                  disabled={isPlacingBid}
+                  className={`flex-1 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-400 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(14,165,233,0.4)] hover:shadow-[0_0_30px_rgba(14,165,233,0.6)] ${isPlacingBid ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   <span className="flex items-center justify-center">
-                    <Lock className="w-4 h-4 mr-2" />
-                    Confirm Bid
+                    <div className={`mr-2 ${isPlacingBid ? '' : ''}`}>
+                      {isPlacingBid ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Lock className="w-4 h-4" />
+                      )}
+                    </div>
+                    {isPlacingBid ? 'Placing...' : 'Confirm Bid'}
                   </span>
                 </button>
               </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, DollarSign, Calendar, Upload, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CreateAuction = () => {
@@ -227,10 +227,8 @@ const CreateAuction = () => {
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Starting Bid Price <span className="text-red-400">*</span>
               </label>
-              <div className="relative max-w-xs">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400">
-                  <DollarSign size={20} />
-                </span>
+                <div className="relative max-w-xs">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400">₹</span>
                 <input
                   type="number"
                   name="basePrice"

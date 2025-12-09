@@ -87,6 +87,13 @@ const AuctioneerSignin = () => {
           console.warn('Unable to write auctioneer data to sessionStorage', err);
         }
 
+        // Also persist into localStorage so data survives across sessions
+        try {
+          localStorage.setItem('auctioneerData', JSON.stringify(auctioneerInfo));
+        } catch (err) {
+          console.warn('Unable to write auctioneer data to localStorage', err);
+        }
+
         // Store auctioneerId in state
         setAuctioneerId(auctioneerInfo._id);
 
