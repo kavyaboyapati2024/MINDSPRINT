@@ -281,8 +281,7 @@ const LiveAuction = () => {
   const [auctionImage, setAuctionImage] = useState(null);
 
   // Minimum allowed bid calculated from startingBid (10%)
-  const minAllowed = Math.ceil(startingBid ? startingBid * 0.1 : 0);
-
+  const minAllowed =startingBid;
   useEffect(() => {
     if (!auctionId) return;
 
@@ -373,7 +372,7 @@ const LiveAuction = () => {
       return;
     }
     if (minAllowed > 0 && amount < minAllowed) {
-      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')} (10% of starting bid).`);
+      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')}`);
       return;
     }
 
@@ -393,7 +392,7 @@ const LiveAuction = () => {
       return;
     }
     if (minAllowed > 0 && amount < minAllowed) {
-      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')} (10% of starting bid).`);
+      alert(`Minimum bid is ₹${minAllowed.toLocaleString('en-IN')}`);
       return;
     }
 

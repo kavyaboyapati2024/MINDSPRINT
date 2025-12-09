@@ -100,7 +100,6 @@ const MyAuctions = () => {
             startingBid: a.basePrice || a.startingBid || 0,
             timeLeft: end ? formatTimeLeft(end) : '',
             startTime: start ? start.toLocaleString() : null,
-            endDateTime: end ? end.toLocaleString() : null,
             status,
             hasParticipated: true
           };
@@ -253,14 +252,11 @@ const MyAuctions = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
-          <div className="flex flex-col text-slate-400 text-sm space-y-2">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4" />
-              <span>{auction.startTime} - {auction.endDateTime}</span>
-            </div>
+          <div className="flex items-center space-x-2 text-slate-400">
+            <span className="font-medium text-sm">{auction.startTime}</span>
           </div>
           <button 
-            onClick={() => window.location.href = `/live/${auction.id}`}
+            onClick={() => window.location.href = `/auction/${auction.id}`}
             className="w-full sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
           >
             View

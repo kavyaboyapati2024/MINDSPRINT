@@ -352,7 +352,7 @@ const AuctioneerDashboard = () => {
   };
 
   const handleViewAuction = (auction) => {
-    navigate("/live-panel");
+    navigate("/live/" + auction._id);
   };
 
   const handleProfileClick = () => {

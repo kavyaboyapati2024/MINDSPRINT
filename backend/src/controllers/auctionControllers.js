@@ -430,26 +430,44 @@ export const getAuctionsByBidderId = async (req, res) => {
       return res.status(400).json({ message: 'bidderId is required' });
     }
 
-    // Get distinct auction IDs where this user has placed bids
-    const auctionIds = await Bid.find({ userId: bidderId }).distinct('auctionId');
+    // Find registrations where the user has registered for auctions
+    const registrations = await AuctionRegistration.find({ userId: bidderId }).lean();
 
-    if (!auctionIds || auctionIds.length === 0) {
+    if (!registrations || registrations.length === 0) {
       return res.status(200).json({ auctions: [] });
     }
 
-    // Fetch auctions and populate auctioner name, exclude file to keep response small
+    const auctionIds = [...new Set(registrations.map((r) => r.auctionId.toString()))];
+
+    // Fetch auctions and populate auctioner details, exclude file to keep response small
     let auctions = await Auction.find({ _id: { $in: auctionIds } })
       .select('-file')
       .populate('auctionerId', 'accountType fullName organizationName contactPersonName email')
       .lean();
 
-    // Add image URL and include base64 image data directly in JSON
+    const now = new Date();
+
+    // Map auctions to desired output shape and compute status if missing
     auctions = auctions.map((a) => {
-      const { file, ...rest } = a;
+      // determine status from stored value or derive from start/end
+      let status = a.status;
+      try {
+        const start = a.startDateTime ? new Date(a.startDateTime) : null;
+        const end = a.endDateTime ? new Date(a.endDateTime) : null;
+        if (!status) {
+          if (end && end < now) status = 'past';
+          else if (start && start > now) status = 'upcoming';
+          else status = 'ongoing';
+        }
+      } catch (e) {
+        status = status || 'upcoming';
+      }
+
       return {
-        ...rest,
-        imageBase64: file || null,
+        ...a,
+        imageBase64: null,
         imageUrl: `${req.protocol}://${req.get('host')}/api/auctions/${a._id}/image`,
+        status,
       };
     });
 
