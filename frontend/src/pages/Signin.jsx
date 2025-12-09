@@ -72,6 +72,20 @@ const Signin = () => {
         // Store userId in state instead of localStorage
         setUserId(data.userId || data._id);
 
+        // Also persist user data into localStorage so it survives browser restarts
+        try {
+          if (data?.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            console.log('User data stored in localStorage:', data.user);
+          } else if (data?.userId || data?._id) {
+            const idVal = data.userId || data._id;
+            localStorage.setItem('userId', idVal);
+            console.log('UserId stored in localStorage:', idVal);
+          }
+        } catch (err) {
+          console.warn('Unable to write user data to localStorage', err);
+        }
+
         // redirect to homepage after 2s
         setTimeout(() => {
           navigate("/home");

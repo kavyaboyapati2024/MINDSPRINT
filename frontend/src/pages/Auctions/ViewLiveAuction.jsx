@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, Users, Shield, Lock, Eye, IndianRupee, Timer, Gavel, Trophy, Star, UserCheck, UserX, AlertCircle } from 'lucide-react';
+import { Clock, Users, Shield, Lock, Eye, Timer, Gavel, Trophy, Star, UserCheck, UserX, AlertCircle } from 'lucide-react';
 
 const ViewLiveAuction = () => {
   const [timeRemaining, setTimeRemaining] = useState({
@@ -293,7 +293,7 @@ const ViewLiveAuction = () => {
                     Bid Amount (INR)
                   </label>
                   <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">₹</span>
                     <input
                       type="number"
                       value={bidAmount}

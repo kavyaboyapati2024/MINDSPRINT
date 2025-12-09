@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Download, User, Calendar, IndianRupee, TrendingUp } from "lucide-react";
+import { X, Download, User, Calendar, TrendingUp } from "lucide-react";
 
 const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
   const [report, setReport] = useState(null);
@@ -121,7 +121,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
                   <div>
                     <p className="text-slate-400 text-sm">Final Price</p>
                     <p className="text-white font-bold text-lg flex items-center gap-1">
-                      <IndianRupee className="w-4 h-4" />
+                      <span className="inline-flex items-center justify-center w-4 h-4">₹</span>
                       {report.finalPrice.toLocaleString()}
                     </p>
                   </div>
@@ -141,7 +141,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
                   {report.item.image && (
                     <img
                       src={report.item.image}
-                      alt={report.item.title}
+                      alt={report.item.name || report.item.title}
                       className="w-full md:w-48 h-48 object-cover rounded-lg border border-slate-600"
                     />
                   )}
@@ -149,13 +149,13 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
                     <div>
                       <p className="text-slate-400 text-sm">Title</p>
                       <p className="text-white font-semibold text-lg">
-                        {report.item.title}
+                        {report.item.name || report.item.title}
                       </p>
                     </div>
                     <div>
                       <p className="text-slate-400 text-sm">Base Price</p>
                       <p className="text-white font-semibold flex items-center gap-1">
-                        <IndianRupee className="w-4 h-4" />
+                        <span className="inline-flex items-center justify-center w-4 h-4">₹</span>
                         {report.item.basePrice.toLocaleString()}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
                     Seller
                   </h3>
                   <div className="space-y-2">
-                    <p className="text-white font-semibold">{report.seller.name}</p>
+                    <p className="text-white font-semibold">{report.seller.name || report.seller.fullName}</p>
                     <p className="text-slate-400 text-sm">{report.seller.email}</p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ const AuctionReportModal = ({ isOpen, onClose, auctionId }) => {
                           </div>
                           <div className="text-right">
                             <p className="text-emerald-400 font-bold text-lg flex items-center gap-1 justify-end">
-                              <IndianRupee className="w-4 h-4" />
+                              <span className="inline-flex items-center justify-center w-4 h-4">₹</span>
                               {bid.amount.toLocaleString()}
                             </p>
                           </div>

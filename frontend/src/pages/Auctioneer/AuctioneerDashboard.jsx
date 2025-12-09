@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Plus, Search, Filter, Edit2, Trash2, Calendar, Clock, DollarSign, FileText, Eye, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AuctionReportModal from '../../components/auction/AuctionReportModal';
 
 const AuctioneerDashboard = () => {
     const navigate = useNavigate();
@@ -14,6 +15,8 @@ const AuctioneerDashboard = () => {
   const [apiError, setApiError] = useState(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [auctioneerName, setAuctioneerName] = useState('');
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportAuctionId, setReportAuctionId] = useState(null);
 
   // Dummy data with proper image URLs
   const dummyAuctions = [
@@ -126,7 +129,7 @@ const AuctioneerDashboard = () => {
   // Sort auctions to show ongoing first
   const sortAuctions = (auctionsList) => {
     return [...auctionsList].sort((a, b) => {
-      const statusOrder = { ongoing: 0, upcoming: 1, completed: 2 };
+      const statusOrder = { ongoing: 0, upcoming: 1, past: 2 };
       return statusOrder[a.status] - statusOrder[b.status];
     });
   };
@@ -371,7 +374,7 @@ const AuctioneerDashboard = () => {
     const statusConfig = {
       upcoming: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
       ongoing: { bg: 'bg-sky-500/20', text: 'text-sky-400', border: 'border-sky-500/30' },
-      completed: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' }
+      past: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' }
     };
     const config = statusConfig[status] || statusConfig.upcoming;
     return (
@@ -515,7 +518,7 @@ const AuctioneerDashboard = () => {
                 <option value="all">All Status</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
+                <option value="past">Past</option>
               </select>
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -657,11 +660,11 @@ const AuctioneerDashboard = () => {
                         )}
                         
                         {/* Completed - Download Report */}
-                        {auction.status === 'completed' && (
+                        {auction.status === 'past' && (
                           <button
-                            onClick={() => alert(`Download report for: ${auction.title}`)}
+                            onClick={() => { setReportAuctionId(auction._id); setIsReportOpen(true); }}
                             className="flex items-center justify-center gap-2 w-36 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all font-medium shadow-lg shadow-emerald-500/20 text-sm"
-                            title="Download Report"
+                            title="View Report"
                           >
                             <Download size={16} />
                             <span>Report</span>
@@ -806,6 +809,12 @@ const AuctioneerDashboard = () => {
           </div>
         </div>
       )}
+      {/* Auction Report Modal */}
+      <AuctionReportModal
+        isOpen={isReportOpen}
+        onClose={() => { setIsReportOpen(false); setReportAuctionId(null); }}
+        auctionId={reportAuctionId}
+      />
     </div>
   );
 };

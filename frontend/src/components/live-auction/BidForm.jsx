@@ -1,5 +1,5 @@
 import React from "react";
-import { IndianRupee, Eye, Lock } from "lucide-react";
+import { Eye, Lock } from "lucide-react";
 
 const BidForm = ({ bidAmount, setBidAmount, handleSubmitBid }) => {
   return (
@@ -13,7 +13,7 @@ const BidForm = ({ bidAmount, setBidAmount, handleSubmitBid }) => {
             Bid Amount (INR)
           </label>
           <div className="relative">
-            <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">₹</span>
             <input
               type="number"
               value={bidAmount}
