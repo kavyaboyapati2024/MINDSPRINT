@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Users, ChevronDown, ChevronUp, Atom, Eye, HelpCircle } from 'lucide-react';
 import Navbar from '../../components/Navbar';
-
+import QuantumAuctionChatbot from "../../components/Qbot";
 const Faqs = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -221,6 +221,7 @@ const Faqs = () => {
                 </div>
               </div>
             ))}
+            <QuantumAuctionChatbot />
           </div>
         </div>
       </div>
