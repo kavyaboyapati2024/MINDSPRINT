@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, Zap, Award, Atom, Eye, Diamond, Crown } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import QuantumAuctionChatbot from "../../components/Qbot";
 
 const AboutUs = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -260,7 +261,9 @@ const AboutUs = () => {
           </div>
         </div>
       </div>
+      <QuantumAuctionChatbot />
     </div>
+      
   );
 };
 
