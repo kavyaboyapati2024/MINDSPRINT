@@ -24,6 +24,7 @@ import AuctioneerDashboard from "./pages/Auctioneer/AuctioneerDashboard";
 import CreateAuction from "./pages/Auctioneer/CreateAuction";
 import AuctioneerProfile from "./pages/Auctioneer/AuctionerProfile";
 import AuctioneerLivePage from "./pages/Auctioneer/LiveAuctionPanel";
+import ChatTest from './components/ChatTest';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
       <Route path="/create-auction" element={<CreateAuction/>}/>
       <Route path="/auctioneer-profile" element={<AuctioneerProfile/>}/>
       <Route path="/live-panel" element={<AuctioneerLivePage/>}/>
+      <Route path="/chat-test" element={<ChatTest/>} />
     </Routes>
   );
 }

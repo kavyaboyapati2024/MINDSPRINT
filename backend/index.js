@@ -11,6 +11,7 @@ import bidRoutes from "./src/routes/bidRoutes.js"
 import paymentRoutes from "./src/routes/paymentRoutes.js"
 import auctionerRoutes from './src/routes/auctionerRoutes.js';
 import auctionReportRoutes from './src/routes/auctionReportRoutes.js';
+import llmRoutes from './src/routes/llmRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/bids', bidRoutes)
 app.use("/api/payment", paymentRoutes)
 app.use('/api/auctioners', auctionerRoutes)
 app.use('/api/auctionReport', auctionReportRoutes)
+app.use('/api/llm', llmRoutes)
 
 
 
