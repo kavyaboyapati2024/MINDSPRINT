@@ -3,6 +3,7 @@ import Prism from "../components/prism";
 import { motion, AnimatePresence } from "framer-motion";
 import { LogIn, ChevronDown, User, Gavel } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import QuantumAuctionChatbot from "../components/Qbot";
 
 /** Spinning quantum/atom logo */
 const QuantumLogo = ({ size = 40 }) => {
@@ -209,6 +210,7 @@ function Landing() {
           Experience unbreakable security and unprecedented transparency in every transaction.
         </motion.p>
       </div>
+      <QuantumAuctionChatbot />
     </div>
   );
 }

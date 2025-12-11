@@ -7,6 +7,7 @@ import OngoingAuctions from "../../components/auction/OngoingAuctions";
 import UpcomingAuctions from "../../components/auction/UpcomingAuctions";
 import CompletedAuctions from "../../components/auction/CompletedAuctions";
 import AuctionReportModal from "../../components/auction/AuctionReportModal";
+import QuantumAuctionChatbot from "../../components/Qbot"; // Add this import
 
 const AuctionHomepage = () => {
   // Get user from state instead of localStorage
@@ -541,6 +542,9 @@ const AuctionHomepage = () => {
           </div>
         </div>
       )}
+
+      {/* Quantum Chatbot - Added at the end */}
+      <QuantumAuctionChatbot />
     </div>
   );
 };
