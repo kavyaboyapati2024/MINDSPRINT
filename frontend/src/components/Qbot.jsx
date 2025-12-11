@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, HelpCircle, Shield, Send, EyeOff, Minimize2 } from 'lucide-react';
+import streamChat from '../services/ollamaService';
 
 const QuantumAuctionChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -106,33 +107,68 @@ const QuantumAuctionChatbot = () => {
     ]);
     setShowQuestions(false);
   };
+  // Prevent concurrent sends
+  const sendingRef = useRef(false);
 
-  const handleSendMessage = () => {
-    if (!userInput.trim()) return;
+  function appendChunk(text) {
+    setMessages(prev => {
+      if (prev.length === 0 || prev[prev.length - 1].type !== 'bot-stream') {
+        return [...prev, { type: 'bot-stream', text }];
+      }
+      const copy = [...prev];
+      copy[copy.length - 1] = { ...copy[copy.length - 1], text: copy[copy.length - 1].text + text };
+      return copy;
+    });
+  }
 
-    const matchedQuestion = findBestMatch(userInput);
-    
+  function finalizeAssistant() {
+    setMessages(prev => {
+      const copy = [...prev];
+      if (copy.length && copy[copy.length - 1].type === 'bot-stream') {
+        copy[copy.length - 1] = { ...copy[copy.length - 1], type: 'bot' };
+      }
+      return copy;
+    });
+    sendingRef.current = false;
+  }
+
+  const handleSendMessage = async () => {
+    if (!userInput.trim() || sendingRef.current) return;
+
+    const prompt = userInput.trim();
+    const matchedQuestion = findBestMatch(prompt);
+
     if (matchedQuestion) {
       const qa = qaDatabase[matchedQuestion];
       setMessages([
         ...messages,
-        { type: 'user', text: userInput },
+        { type: 'user', text: prompt },
         { type: 'bot', text: qa.answer, followUp: qa.followUp }
       ]);
-    } else {
-      setMessages([
-        ...messages,
-        { type: 'user', text: userInput },
-        { 
-          type: 'bot', 
-          text: "I'm sorry, I couldn't find a specific answer to that question. Here are some topics I can help you with:\n\n• Quantum Key Distribution basics\n• How our system differs from normal auctions\n• Device requirements\n• Bid security and protection\n• Hack prevention\n• System speed and performance\n• Bid privacy\n\nPlease select a question from the list below or rephrase your query with these keywords.",
-          showSuggestions: true
-        }
-      ]);
+      setUserInput('');
+      setShowQuestions(false);
+      return;
     }
-    
+
+    // Stream via Ollama for unmatched prompts
+    sendingRef.current = true;
+    setMessages(prev => [...prev, { type: 'user', text: prompt }, { type: 'bot-stream', text: '' }]);
     setUserInput('');
     setShowQuestions(false);
+
+    try {
+      await streamChat(prompt, {
+        onChunk: (delta) => appendChunk(delta),
+        onDone: () => finalizeAssistant(),
+        onError: (err) => {
+          finalizeAssistant();
+          setMessages(prev => [...prev, { type: 'bot', text: 'Error: ' + String(err) }]);
+        }
+      });
+    } catch (err) {
+      finalizeAssistant();
+      setMessages(prev => [...prev, { type: 'bot', text: 'Error: ' + String(err) }]);
+    }
   };
 
   const handleKeyPress = (e) => {
